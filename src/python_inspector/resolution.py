@@ -6,42 +6,32 @@
 # See https://github.com/nexB/python-inspector for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
+from __future__ import annotations
 
 import ast
 import operator
 import os
-import re
 import tarfile
-from typing import Dict
-from typing import Generator
-from typing import List
+from collections.abc import Generator
 from typing import NamedTuple
-from typing import Tuple
-from typing import Union
 from zipfile import ZipFile
 
 import packvers.utils
 from packageurl import PackageURL
 from packvers.requirements import Requirement
-from packvers.version import LegacyVersion
-from packvers.version import Version
+from packvers.version import LegacyVersion, Version
 from packvers.version import parse as parse_version
 from resolvelib import AbstractProvider
 from resolvelib.structs import DirectedGraph
 
 from _packagedcode.models import DependentPackage
-from _packagedcode.pypi import BasePypiHandler
-from _packagedcode.pypi import PipRequirementsFileHandler
-from _packagedcode.pypi import PypiWheelHandler
-from _packagedcode.pypi import PythonSetupPyHandler
-from _packagedcode.pypi import SetupCfgHandler
-from _packagedcode.pypi import can_process_dependent_package
+from _packagedcode.pypi import (BasePypiHandler, PipRequirementsFileHandler,
+                                PypiWheelHandler, PythonSetupPyHandler,
+                                SetupCfgHandler, can_process_dependent_package)
 from python_inspector import utils_pypi
 from python_inspector.error import NoVersionsFound
 from python_inspector.setup_py_live_eval import iter_requirements
-from python_inspector.utils import Candidate
-from python_inspector.utils import contain_string
-from python_inspector.utils import get_response
+from python_inspector.utils import Candidate, contain_string, get_response
 from python_inspector.utils_pypi import PypiSimpleRepository
 
 
@@ -65,15 +55,15 @@ class Result(NamedTuple):
        requirement, and the value is a `Criterion` instance.
     """
 
-    mapping: Dict
+    mapping: dict
     graph: DirectedGraph
-    criteria: Dict
+    criteria: dict
 
 
 def get_requirements_from_distribution(
     handler: BasePypiHandler,
     location: str,
-) -> List[Requirement]:
+) -> list[Requirement]:
     """
     Return a list of requirements from a source distribution or wheel at
     ``location`` using the provided ``handler`` DatafileHandler for parsing.
@@ -92,7 +82,7 @@ def get_requirements_from_distribution(
 def get_deps_from_distribution(
     handler: BasePypiHandler,
     location: str,
-) -> List[DependentPackage]:
+) -> list[DependentPackage]:
     """
     Return a list of requirements from a source distribution or wheel at
     ``location`` using the provided ``handler`` DatafileHandler for parsing.
@@ -112,7 +102,7 @@ def get_environment_marker_from_environment(environment):
     return {
         "extra": "",
         "python_version": get_python_version_from_env_tag(
-            python_version=environment.python_version
+            python_version=environment.python_version,
         ),
         "platform_system": environment.operating_system.capitalize(),
         "sys_platform": environment.operating_system,
@@ -142,7 +132,7 @@ def parse_deps_from_setup_py_insecurely(setup_py):
                 PackageURL(
                     type="pypi",
                     name=parsed_req.name,
-                )
+                ),
             ),
             extracted_requirement=req,
             scope="install",
@@ -151,10 +141,10 @@ def parse_deps_from_setup_py_insecurely(setup_py):
 
 
 def is_valid_version(
-    parsed_version: Union[LegacyVersion, Version],
-    requirements: Dict,
+    parsed_version: LegacyVersion | Version,
+    requirements: dict,
     identifier: str,
-    bad_versions: List[Version],
+    bad_versions: list[Version],
 ) -> bool:
     """
     Return True if the parsed_version is valid for the given identifier.
@@ -180,8 +170,10 @@ def get_python_version_from_env_tag(python_version: str) -> str:
 
 
 def fetch_and_extract_sdist(
-    repos: List[PypiSimpleRepository], candidate: Candidate, python_version: str
-) -> Union[str, None]:
+    repos: list[PypiSimpleRepository],
+    candidate: Candidate,
+    python_version: str,
+) -> str | None:
     """
     Fetch and extract the source distribution (sdist) for the ``candidate`` Candidate
     from the `repos` list of PyPiRepository
@@ -210,13 +202,13 @@ def get_sdist_file_path_from_filename(sdist):
         sdist_file = sdist.rstrip(".tar.gz")
         with tarfile.open(os.path.join(utils_pypi.CACHE_THIRDPARTY_DIR, sdist)) as file:
             file.extractall(
-                os.path.join(utils_pypi.CACHE_THIRDPARTY_DIR, "extracted_sdists", sdist_file)
+                os.path.join(utils_pypi.CACHE_THIRDPARTY_DIR, "extracted_sdists", sdist_file),
             )
     elif sdist.endswith(".zip"):
         sdist_file = sdist.rstrip(".zip")
         with ZipFile(os.path.join(utils_pypi.CACHE_THIRDPARTY_DIR, sdist)) as zip:
             zip.extractall(
-                os.path.join(utils_pypi.CACHE_THIRDPARTY_DIR, "extracted_sdists", sdist_file)
+                os.path.join(utils_pypi.CACHE_THIRDPARTY_DIR, "extracted_sdists", sdist_file),
             )
 
     else:
@@ -226,8 +218,9 @@ def get_sdist_file_path_from_filename(sdist):
 
 
 def get_requirements_from_dependencies(
-    dependencies: List[DependentPackage], scopes: Tuple[str] = ("install",)
-) -> List[Requirement]:
+    dependencies: list[DependentPackage],
+    scopes: tuple[str] = ("install",),
+) -> list[Requirement]:
     """
     Generate parsed requirements for the given ``dependencies``.
     """
@@ -255,7 +248,7 @@ def remove_extras(identifier: str) -> str:
     return name
 
 
-def get_reqs_from_requirements_file_in_sdist(sdist_location: str, files: str) -> List[Requirement]:
+def get_reqs_from_requirements_file_in_sdist(sdist_location: str, files: str) -> list[Requirement]:
     """
     Return a list of parsed requirements from the ``sdist_location`` sdist location
     """
@@ -278,8 +271,11 @@ def get_reqs_insecurely(setup_py_location):
 
 
 def get_requirements_from_python_manifest(
-    sdist_location: str, setup_py_location: str, files: List, analyze_setup_py_insecurely: bool
-) -> List[Requirement]:
+    sdist_location: str,
+    setup_py_location: str,
+    files: list,
+    analyze_setup_py_insecurely: bool,
+) -> list[Requirement]:
     """
     Return a list of parsed requirements from the ``sdist_location`` sdist location
     """
@@ -289,7 +285,7 @@ def get_requirements_from_python_manifest(
         get_reqs_from_requirements_file_in_sdist(
             files=files,
             sdist_location=sdist_location,
-        )
+        ),
     )
     if requirements:
         yield from requirements
@@ -318,35 +314,34 @@ def get_requirements_from_python_manifest(
                 ]
                 if len(setup_fct) == 0:
                     raise Exception(
-                        f"Unable to collect setup.py dependencies securely: {setup_py_location}"
+                        f"Unable to collect setup.py dependencies securely: {setup_py_location}",
                     )
                 if len(setup_fct) > 1:
                     print(
                         f"Warning: identified multiple definitions of 'setup()' in {setup_py_location}, "
-                        "defaulting to the first occurrence"
+                        "defaulting to the first occurrence",
                     )
                 setup_fct = setup_fct[0]
-                install_requires = [
-                    k.value for k in setup_fct.value.keywords if k.arg == "install_requires"
-                ]
+                install_requires = [k.value for k in setup_fct.value.keywords if k.arg == "install_requires"]
                 if len(install_requires) == 0:
                     raise Exception(
-                        f"Unable to collect setup.py dependencies securely: {setup_py_location}"
+                        f"Unable to collect setup.py dependencies securely: {setup_py_location}",
                     )
                 if len(install_requires) > 1:
                     print(
-                        f"Warning: identified multiple definitions of 'install_requires' in "
-                        "{setup_py_location}, defaulting to the first occurrence"
+                        "Warning: identified multiple definitions of 'install_requires' in "
+                        f"{setup_py_location}, defaulting to the first occurrence",
                     )
                 install_requires = install_requires[0].elts
                 if len(install_requires) != 0:
                     raise Exception(
-                        f"Unable to collect setup.py dependencies securely: {setup_py_location}"
+                        f"Unable to collect setup.py dependencies securely: {setup_py_location}",
                     )
 
 
 DEFAULT_ENVIRONMENT = utils_pypi.Environment.from_pyver_and_os(
-    python_version="38", operating_system="linux"
+    python_version="38",
+    operating_system="linux",
 )
 
 
@@ -367,12 +362,12 @@ class PythonInputProvider(AbstractProvider):
         self.analyze_setup_py_insecurely = analyze_setup_py_insecurely
         self.ignore_errors = ignore_errors
 
-    def identify(self, requirement_or_candidate: Union[Candidate, Requirement]) -> str:
+    def identify(self, requirement_or_candidate: Candidate | Requirement) -> str:
         """Given a requirement, return an identifier for it. Overridden."""
         name = packvers.utils.canonicalize_name(requirement_or_candidate.name)
         if requirement_or_candidate.extras:
             extras_str = ",".join(sorted(requirement_or_candidate.extras))
-            return "{}[{}]".format(name, extras_str)
+            return f"{name}[{extras_str}]"
         return name
 
     def get_preference(
@@ -389,8 +384,10 @@ class PythonInputProvider(AbstractProvider):
         return transitive, identifier
 
     def get_versions_for_package(
-        self, name: str, repo: Union[List[PypiSimpleRepository], None] = None
-    ) -> List[Version]:
+        self,
+        name: str,
+        repo: list[PypiSimpleRepository] | None = None,
+    ) -> list[Version]:
         """
         Return a list of versions for a package.
         """
@@ -400,15 +397,17 @@ class PythonInputProvider(AbstractProvider):
             return self.get_versions_for_package_from_pypi_json_api(name)
 
     def get_versions_for_package_from_repo(
-        self, name: str, repo: PypiSimpleRepository
-    ) -> List[Version]:
+        self,
+        name: str,
+        repo: PypiSimpleRepository,
+    ) -> list[Version]:
         """
         Return a list of versions for a package name from a repo
         """
         versions = []
         for version, package in repo.get_package_versions(name).items():
             python_version = parse_version(
-                get_python_version_from_env_tag(python_version=self.environment.python_version)
+                get_python_version_from_env_tag(python_version=self.environment.python_version),
             )
             wheels = list(package.get_supported_wheels(environment=self.environment))
             valid_wheel_present = False
@@ -416,18 +415,20 @@ class PythonInputProvider(AbstractProvider):
             if wheels:
                 for wheel in wheels:
                     if utils_pypi.valid_python_version(
-                        python_requires=wheel.python_requires, python_version=python_version
+                        python_requires=wheel.python_requires,
+                        python_version=python_version,
                     ):
                         valid_wheel_present = True
             if package.sdist:
                 pypi_valid_python_version = utils_pypi.valid_python_version(
-                    python_requires=package.sdist.python_requires, python_version=python_version
+                    python_requires=package.sdist.python_requires,
+                    python_version=python_version,
                 )
             if valid_wheel_present or pypi_valid_python_version:
                 versions.append(version)
         return versions
 
-    def get_versions_for_package_from_pypi_json_api(self, name: str) -> List[Version]:
+    def get_versions_for_package_from_pypi_json_api(self, name: str) -> list[Version]:
         """
         Return a list of versions for a package name from the PyPI.org JSON API
         """
@@ -442,7 +443,9 @@ class PythonInputProvider(AbstractProvider):
         return versions
 
     def get_requirements_for_package(
-        self, purl: PackageURL, candidate: Candidate
+        self,
+        purl: PackageURL,
+        candidate: Candidate,
     ) -> Generator[Requirement, None, None]:
         """
         Yield requirements for a package.
@@ -453,13 +456,14 @@ class PythonInputProvider(AbstractProvider):
             return self.get_requirements_for_package_from_pypi_json_api(purl)
 
     def get_requirements_for_package_from_pypi_simple(
-        self, candidate: Candidate
-    ) -> List[Requirement]:
+        self,
+        candidate: Candidate,
+    ) -> list[Requirement]:
         """
         Return requirements for a package from the simple repositories.
         """
         python_version = parse_version(
-            get_python_version_from_env_tag(python_version=self.environment.python_version)
+            get_python_version_from_env_tag(python_version=self.environment.python_version),
         )
 
         wheels = utils_pypi.download_wheel(
@@ -484,7 +488,9 @@ class PythonInputProvider(AbstractProvider):
 
         else:
             sdist_location = fetch_and_extract_sdist(
-                repos=self.repos, candidate=candidate, python_version=python_version
+                repos=self.repos,
+                candidate=candidate,
+                python_version=python_version,
             )
             if not sdist_location:
                 return
@@ -508,7 +514,7 @@ class PythonInputProvider(AbstractProvider):
                         sdist_location=sdist_location,
                         setup_py_location=setup_py_location,
                         setup_cfg_location=setup_cfg_location,
-                    )
+                    ),
                 )
                 if requirements:
                     yield from requirements
@@ -524,8 +530,9 @@ class PythonInputProvider(AbstractProvider):
                     )
 
     def get_requirements_for_package_from_pypi_json_api(
-        self, purl: PackageURL
-    ) -> List[Requirement]:
+        self,
+        purl: PackageURL,
+    ) -> list[Requirement]:
         """
         Return requirements for a package from the PyPI.org JSON API
         """
@@ -543,12 +550,12 @@ class PythonInputProvider(AbstractProvider):
 
     def get_candidates(
         self,
-        all_versions: List[str],
-        requirements: List[Requirement],
+        all_versions: list[str],
+        requirements: list[Requirement],
         identifier: str,
-        bad_versions: List[str],
+        bad_versions: list[str],
         name: str,
-        extras: Dict,
+        extras: dict,
     ) -> Generator[Candidate, None, None]:
         """
         Generate candidates for the given identifier. Overridden.
@@ -571,8 +578,8 @@ class PythonInputProvider(AbstractProvider):
     def _iter_matches(
         self,
         identifier: str,
-        requirements: Dict,
-        incompatibilities: Dict,
+        requirements: dict,
+        incompatibilities: dict,
     ) -> Generator[Candidate, None, None]:
         """
         Yield candidates for the given identifier, requirements and incompatibilities
@@ -605,9 +612,9 @@ class PythonInputProvider(AbstractProvider):
     def find_matches(
         self,
         identifier: str,
-        requirements: List[Requirement],
-        incompatibilities: Dict,
-    ) -> List[Candidate]:
+        requirements: list[Requirement],
+        incompatibilities: dict,
+    ) -> list[Candidate]:
         """Find all possible candidates that satisfy given constraints. Overridden."""
         candidates = sorted(
             self._iter_matches(identifier, requirements, incompatibilities),
@@ -618,9 +625,7 @@ class PythonInputProvider(AbstractProvider):
 
     def is_satisfied_by(self, requirement: Requirement, candidate: Candidate) -> bool:
         """Whether the given requirement can be satisfied by a candidate. Overridden."""
-        if candidate.version in requirement.specifier:
-            return True
-        elif not requirement.specifier:
+        if candidate.version in requirement.specifier or not requirement.specifier:
             return True
         return False
 
@@ -647,21 +652,21 @@ class PythonInputProvider(AbstractProvider):
                 if r.marker.evaluate(self.environment_marker):
                     yield r
 
-    def get_dependencies(self, candidate: Candidate) -> List[Requirement]:
+    def get_dependencies(self, candidate: Candidate) -> list[Requirement]:
         """Get dependencies of a candidate. Overridden."""
         return list(self._iter_dependencies(candidate))
 
 
-def get_all_srcs(mapping: Dict, graph: DirectedGraph):
+def get_all_srcs(mapping: dict, graph: DirectedGraph):
     """
     Return a list of all sources in the graph.
     """
-    for name in mapping.keys():
+    for name in mapping:
         if list(graph.iter_parents(name)) == [None]:
             yield name
 
 
-def dfs(mapping: Dict, graph: DirectedGraph, src: str):
+def dfs(mapping: dict, graph: DirectedGraph, src: str):
     """
     Return a nested mapping of dependencies.
     """
@@ -733,7 +738,10 @@ def pdt_dfs(mapping, graph, src):
     children = list(graph.iter_children(src))
     if not children:
         return dict(
-            key=src, package_name=src, installed_version=str(mapping[src].version), dependencies=[]
+            key=src,
+            package_name=src,
+            installed_version=str(mapping[src].version),
+            dependencies=[],
         )
     # recurse
     dependencies = [pdt_dfs(mapping, graph, c) for c in children]
@@ -781,7 +789,7 @@ def get_package_list(results):
                 version=str(mapping[dependency].version),
             )
             packages.add(str(dep_purl))
-    return list(sorted(packages))
+    return sorted(packages)
 
 
 def get_setup_requirements(sdist_location: str, setup_py_location: str, setup_cfg_location: str):

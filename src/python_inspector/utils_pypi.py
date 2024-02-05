@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright (c) nexB Inc. and others. All rights reserved.
 # ScanCode is a trademark of nexB Inc.
@@ -8,21 +7,19 @@
 # See https://github.com/nexB/skeleton for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
+from __future__ import annotations
+
 import email
 import itertools
 import os
-import pathlib
 import re
 import shutil
 import tempfile
 import time
 from collections import defaultdict
-from typing import List
-from typing import NamedTuple
-from urllib.parse import quote_plus
-from urllib.parse import unquote
-from urllib.parse import urlparse
-from urllib.parse import urlunparse
+from pathlib import Path
+from typing import Any, NamedTuple
+from urllib.parse import quote_plus, unquote, urlparse, urlunparse
 
 import attr
 import packageurl
@@ -34,8 +31,8 @@ from packvers import tags as packaging_tags
 from packvers import version as packaging_version
 from packvers.specifiers import SpecifierSet
 
-from python_inspector import DEFAULT_PYTHON_VERSION
-from python_inspector import utils_pip_compatibility_tags
+from python_inspector import (DEFAULT_PYTHON_VERSION,
+                              utils_pip_compatibility_tags)
 
 """
 Utilities to manage Python thirparty libraries source, binaries and metadata in
@@ -182,11 +179,11 @@ CACHE_THIRDPARTY_DIR = os.environ.get("PYTHON_INSPECTOR_CACHE_DIR")
 if not CACHE_THIRDPARTY_DIR:
     CACHE_THIRDPARTY_DIR = ".cache/python_inspector"
     try:
-        os.makedirs(CACHE_THIRDPARTY_DIR, exist_ok=True)
+        Path(CACHE_THIRDPARTY_DIR).mkdir(exist_ok=True)
     except Exception:
-        home = pathlib.Path.home()
+        home = Path.home()
         CACHE_THIRDPARTY_DIR = str(home / ".cache/python_inspector")
-        os.makedirs(CACHE_THIRDPARTY_DIR, exist_ok=True)
+        Path(CACHE_THIRDPARTY_DIR).mkdir(exist_ok=True)
 
 
 ################################################################################
@@ -219,7 +216,7 @@ def download_wheel(
     version,
     environment,
     dest_dir=CACHE_THIRDPARTY_DIR,
-    repos=tuple(),
+    repos=(),
     verbose=False,
     echo_func=None,
     python_version=DEFAULT_PYTHON_VERSION,
@@ -240,14 +237,10 @@ def download_wheel(
 
     fetched_wheel_filenames = []
     for repo in repos:
-        supported_and_valid_wheels = get_supported_and_valid_wheels(
-            repo, name, version, environment, python_version
-        )
+        supported_and_valid_wheels = get_supported_and_valid_wheels(repo, name, version, environment, python_version)
         if not supported_and_valid_wheels:
             if TRACE_DEEP:
-                print(
-                    f"    download_wheel: No supported and valid wheel for {name}=={version}: {environment} "
-                )
+                print(f"    download_wheel: No supported and valid wheel for {name}=={version}: {environment} ")
             continue
         for wheel in supported_and_valid_wheels:
             fetched_wheel_filename = wheel.download(
@@ -267,54 +260,42 @@ def get_valid_sdist(repo, name, version, python_version=DEFAULT_PYTHON_VERSION):
     package = repo.get_package_version(name=name, version=version)
     if not package:
         if TRACE_DEEP:
-            print(
-                print(f"    get_valid_sdist: No package in {repo.index_url} for {name}=={version}")
-            )
+            print(print(f"    get_valid_sdist: No package in {repo.index_url} for {name}=={version}"))
         return
     sdist = package.sdist
     if not sdist:
         if TRACE_DEEP:
             print(f"    get_valid_sdist: No sdist for {name}=={version}")
         return
-    if not valid_python_version(
-        python_requires=sdist.python_requires, python_version=python_version
-    ):
+    if not valid_python_version(python_requires=sdist.python_requires, python_version=python_version):
         return
     if TRACE_DEEP:
         print(f"    get_valid_sdist: Getting sdist from index (or cache): {sdist.download_url}")
     return sdist
 
 
-def get_supported_and_valid_wheels(
-    repo, name, version, environment, python_version=DEFAULT_PYTHON_VERSION
-) -> List:
+def get_supported_and_valid_wheels(repo, name, version, environment, python_version=DEFAULT_PYTHON_VERSION) -> list:
     """
     Return a list of wheels matching the ``environment`` Environment constraints.
     """
     package = repo.get_package_version(name=name, version=version)
     if not package:
         if TRACE_DEEP:
-            print(
-                f"    get_supported_and_valid_wheels: No package in {repo.index_url} for {name}=={version}"
-            )
+            print(f"    get_supported_and_valid_wheels: No package in {repo.index_url} for {name}=={version}")
         return []
     supported_wheels = list(package.get_supported_wheels(environment=environment))
     if not supported_wheels:
         if TRACE_DEEP:
-            print(
-                f"    get_supported_and_valid_wheels: No supported wheel for {name}=={version}: {environment}"
-            )
+            print(f"    get_supported_and_valid_wheels: No supported wheel for {name}=={version}: {environment}")
         return []
     wheels = []
     for wheel in supported_wheels:
-        if not valid_python_version(
-            python_requires=wheel.python_requires, python_version=python_version
-        ):
+        if not valid_python_version(python_requires=wheel.python_requires, python_version=python_version):
             continue
         if TRACE_DEEP:
             print(
                 f"""    get_supported_and_valid_wheels: Getting wheel from index (or cache):
-                {wheel.download_url}"""
+                {wheel.download_url}""",
             )
         wheels.append(wheel)
     return wheels
@@ -381,14 +362,12 @@ def download_sdist(
 
 @attr.attributes
 class NameVer:
-    name = attr.ib(
-        type=str,
-        metadata=dict(help="Python package name, lowercase and normalized."),
+    name: str = attr.ib(
+        metadata={"help": "Python package name, lowercase and normalized."},
     )
 
-    version = attr.ib(
-        type=str,
-        metadata=dict(help="Python package version string."),
+    version: str = attr.ib(
+        metadata={"help": "Python package version string."},
     )
 
     @property
@@ -426,7 +405,6 @@ class Link(NamedTuple):
 
 @attr.attributes
 class Distribution(NameVer):
-
     """
     A Distribution is either either a Wheel or Sdist and is identified by and
     created from its filename as well as its name and version. A Distribution is
@@ -444,148 +422,127 @@ class Distribution(NameVer):
         "extra_data",
     ]
 
-    filename = attr.ib(
+    filename: str = attr.ib(
         repr=False,
-        type=str,
         default="",
-        metadata=dict(help="File name."),
+        metadata={"help": "File name."},
     )
 
-    path_or_url = attr.ib(
+    path_or_url: str = attr.ib(
         repr=False,
-        type=str,
         default="",
-        metadata=dict(help="Path or URL"),
+        metadata={"help": "Path or URL"},
     )
 
-    sha256 = attr.ib(
+    sha256: str = attr.ib(
         repr=False,
-        type=str,
         default="",
-        metadata=dict(help="SHA256 checksum."),
+        metadata={"help": "SHA256 checksum."},
     )
 
-    sha1 = attr.ib(
+    sha1: str = attr.ib(
         repr=False,
-        type=str,
         default="",
-        metadata=dict(help="SHA1 checksum."),
+        metadata={"help": "SHA1 checksum."},
     )
 
-    md5 = attr.ib(
+    md5: int = attr.ib(
         repr=False,
-        type=int,
         default=0,
-        metadata=dict(help="MD5 checksum."),
+        metadata={"help": "MD5 checksum."},
     )
 
-    type = attr.ib(
+    type: str = attr.ib(
         repr=False,
-        type=str,
         default="pypi",
-        metadata=dict(help="Package type"),
+        metadata={"help": "Package type"},
     )
 
-    namespace = attr.ib(
+    namespace: str = attr.ib(
         repr=False,
-        type=str,
         default="",
-        metadata=dict(help="Package URL namespace"),
+        metadata={"help": "Package URL namespace"},
     )
 
-    qualifiers = attr.ib(
+    qualifiers: dict = attr.ib(
         repr=False,
-        type=dict,
         default=attr.Factory(dict),
-        metadata=dict(help="Package URL qualifiers"),
+        metadata={"help": "Package URL qualifiers"},
     )
 
-    subpath = attr.ib(
+    subpath: str = attr.ib(
         repr=False,
-        type=str,
         default="",
-        metadata=dict(help="Package URL subpath"),
+        metadata={"help": "Package URL subpath"},
     )
 
-    size = attr.ib(
+    size: str = attr.ib(
         repr=False,
-        type=str,
         default="",
-        metadata=dict(help="Size in bytes."),
+        metadata={"help": "Size in bytes."},
     )
 
-    primary_language = attr.ib(
+    primary_language: str = attr.ib(
         repr=False,
-        type=str,
         default="Python",
-        metadata=dict(help="Primary Programming language."),
+        metadata={"help": "Primary Programming language."},
     )
 
-    description = attr.ib(
+    description: str = attr.ib(
         repr=False,
-        type=str,
         default="",
-        metadata=dict(help="Description."),
+        metadata={"help": "Description."},
     )
 
-    homepage_url = attr.ib(
+    homepage_url: str = attr.ib(
         repr=False,
-        type=str,
         default="",
-        metadata=dict(help="Homepage URL"),
+        metadata={"help": "Homepage URL"},
     )
 
-    notes = attr.ib(
+    notes: str = attr.ib(
         repr=False,
-        type=str,
         default="",
-        metadata=dict(help="Notes."),
+        metadata={"help": "Notes."},
     )
 
-    copyright = attr.ib(
+    copyright: str = attr.ib(
         repr=False,
-        type=str,
         default="",
-        metadata=dict(help="Copyright."),
+        metadata={"help": "Copyright."},
     )
 
-    license_expression = attr.ib(
+    license_expression: str = attr.ib(
         repr=False,
-        type=str,
         default="",
-        metadata=dict(help="License expression"),
+        metadata={"help": "License expression"},
     )
 
-    licenses = attr.ib(
+    licenses: list = attr.ib(
         repr=False,
-        type=list,
         default=attr.Factory(list),
-        metadata=dict(help="List of license mappings."),
+        metadata={"help": "List of license mappings."},
     )
 
-    notice_text = attr.ib(
+    notice_text: str = attr.ib(
         repr=False,
-        type=str,
         default="",
-        metadata=dict(help="Notice text"),
+        metadata={"help": "Notice text"},
     )
 
-    extra_data = attr.ib(
+    extra_data: dict = attr.ib(
         repr=False,
-        type=dict,
         default=attr.Factory(dict),
-        metadata=dict(help="Extra data"),
+        metadata={"help": "Extra data"},
     )
 
-    credentials = attr.ib(
-        type=dict,
+    credentials: dict = attr.ib(
         default=None,
     )
 
-    python_requires = attr.ib(
-        type=str,
+    python_requires: str = attr.ib(
         default="",
-        metadata=dict(help="Python 'specifier' required by this distribution."),
+        metadata={"help": "Python 'specifier' required by this distribution."},
     )
 
     @property
@@ -601,14 +558,14 @@ class Distribution(NameVer):
                 version=self.version,
                 subpath=self.subpath,
                 qualifiers=self.qualifiers,
-            )
+            ),
         )
 
     @property
     def download_url(self):
         return self.get_best_download_url()
 
-    def get_best_download_url(self, repos=tuple()):
+    def get_best_download_url(self, repos=()):
         """
         Return the best download URL for this distribution where best means this
         is the first URL found for this distribution found in the list of
@@ -624,19 +581,14 @@ class Distribution(NameVer):
             package = repo.get_package_version(name=self.name, version=self.version)
             if not package:
                 if TRACE:
-                    print(
-                        f"     get_best_download_url: {self.name}=={self.version} "
-                        f"not found in {repo.index_url}"
-                    )
+                    print(f"     get_best_download_url: {self.name}=={self.version} " f"not found in {repo.index_url}")
                 continue
             pypi_url = package.get_url_for_filename(self.filename)
             if pypi_url:
                 return pypi_url
             else:
                 if TRACE:
-                    print(
-                        f"     get_best_download_url: {self.filename} not found in {repo.index_url}"
-                    )
+                    print(f"     get_best_download_url: {self.filename} not found in {repo.index_url}")
 
     def download(
         self,
@@ -676,7 +628,7 @@ class Distribution(NameVer):
         """
         requires_python = link.python_requires
         path_or_url = link.url
-        filename = os.path.basename(path_or_url.strip("/"))
+        filename = Path(path_or_url).name
         dist = cls.from_filename(filename)
         dist.path_or_url = path_or_url
         dist.python_requires = requires_python
@@ -690,7 +642,7 @@ class Distribution(NameVer):
             (
                 ".zip",
                 ".tar.gz",
-            )
+            ),
         ):
             return Sdist
         raise InvalidDistributionFilename(filename)
@@ -715,9 +667,10 @@ class Distribution(NameVer):
         Return a mapping of computed checksums for this dist filename is
         `dest_dir`.
         """
-        dist_loc = os.path.join(dest_dir, self.filename)
-        if os.path.exists(dist_loc):
-            return multi_checksums(dist_loc, checksum_names=("md5", "sha1", "sha256"))
+
+        dist_loc = Path(dest_dir) / self.filename
+        if dist_loc.exists():
+            return multi_checksums(dist_loc.as_posix(), checksum_names=("md5", "sha1", "sha256"))
         else:
             return {}
 
@@ -754,9 +707,9 @@ class Distribution(NameVer):
         else:
             fmt = None
 
-        dist = os.path.join(dest_dir, fn)
+        dist = Path(dest_dir) / fn
         with tempfile.TemporaryDirectory(prefix=f"pypi-tmp-extract-{fn}") as td:
-            shutil.unpack_archive(filename=dist, extract_dir=td, format=fmt)
+            shutil.unpack_archive(filename=dist.as_posix(), extract_dir=td, format=fmt)
             # NOTE: we only care about the first one found in the dist
             # which may not be 100% right
             for pi in fileutils.resource_iter(location=td, with_dirs=False):
@@ -764,9 +717,9 @@ class Distribution(NameVer):
                     (
                         "PKG-INFO",
                         "METADATA",
-                    )
+                    ),
                 ):
-                    with open(pi) as fi:
+                    with Path(pi).open() as fi:
                         return fi.read()
 
     def load_pkginfo_data(self, dest_dir=CACHE_THIRDPARTY_DIR):
@@ -782,27 +735,25 @@ class Distribution(NameVer):
 
         classifiers = raw_data.get_all("Classifier") or []
 
-        declared_license = [raw_data["License"]] + [
-            c for c in classifiers if c.startswith("License")
-        ]
+        declared_license = [raw_data["License"]] + [c for c in classifiers if c.startswith("License")]
         other_classifiers = [c for c in classifiers if not c.startswith("License")]
 
         holder = raw_data["Author"]
         holder_contact = raw_data["Author-email"]
         copyright_statement = f"Copyright (c) {holder} <{holder_contact}>"
 
-        pkginfo_data = dict(
-            name=raw_data["Name"],
-            declared_license=declared_license,
-            version=raw_data["Version"],
-            description=raw_data["Summary"],
-            homepage_url=raw_data["Home-page"],
-            copyright=copyright_statement,
-            holder=holder,
-            holder_contact=holder_contact,
-            keywords=raw_data["Keywords"],
-            classifiers=other_classifiers,
-        )
+        pkginfo_data = {
+            "name": raw_data["Name"],
+            "declared_license": declared_license,
+            "version": raw_data["Version"],
+            "description": raw_data["Summary"],
+            "homepage_url": raw_data["Home-page"],
+            "copyright": copyright_statement,
+            "holder": holder,
+            "holder_contact": holder_contact,
+            "keywords": raw_data["Keywords"],
+            "classifiers": other_classifiers,
+        }
 
         return self.update(pkginfo_data, keep_extra=True)
 
@@ -828,10 +779,7 @@ class Distribution(NameVer):
             purl_from_data = packageurl.PackageURL.from_string(package_url)
             purl_from_self = packageurl.PackageURL.from_string(self.package_url)
             if purl_from_data != purl_from_self:
-                print(
-                    f"Invalid dist update attempt, no same same purl with dist: "
-                    f"{self} using data {data}."
-                )
+                print(f"Invalid dist update attempt, no same same purl with dist: " f"{self} using data {data}.")
                 return
 
         data.pop("about_resource", None)
@@ -960,11 +908,10 @@ def get_filename(filename):
 
 @attr.attributes
 class Sdist(Distribution):
-    extension = attr.ib(
+    extension: str = attr.ib(
         repr=False,
-        type=str,
         default="",
-        metadata=dict(help="File extension, including leading dot."),
+        metadata={"help": "File extension, including leading dot."},
     )
 
     @classmethod
@@ -998,7 +945,6 @@ class Sdist(Distribution):
 
 @attr.attributes
 class Wheel(Distribution):
-
     """
     Represents a wheel file.
 
@@ -1041,35 +987,30 @@ class Wheel(Distribution):
         re.VERBOSE,
     ).match
 
-    build = attr.ib(
-        type=str,
+    build: str = attr.ib(
         default="",
-        metadata=dict(help="Python wheel build."),
+        metadata={"help": "Python wheel build."},
     )
 
-    python_versions = attr.ib(
-        type=list,
+    python_versions: list = attr.ib(
         default=attr.Factory(list),
-        metadata=dict(help="List of wheel Python version tags."),
+        metadata={"help": "List of wheel Python version tags."},
     )
 
-    abis = attr.ib(
-        type=list,
+    abis: list = attr.ib(
         default=attr.Factory(list),
-        metadata=dict(help="List of wheel ABI tags."),
+        metadata={"help": "List of wheel ABI tags."},
     )
 
-    platforms = attr.ib(
-        type=list,
+    platforms: list = attr.ib(
         default=attr.Factory(list),
-        metadata=dict(help="List of wheel platform tags."),
+        metadata={"help": "List of wheel platform tags."},
     )
 
-    tags = attr.ib(
+    tags: set = attr.ib(
         repr=False,
-        type=set,
         default=attr.Factory(set),
-        metadata=dict(help="Set of all tags for this wheel."),
+        metadata={"help": "Set of all tags for this wheel."},
     )
 
     @classmethod
@@ -1093,9 +1034,7 @@ class Wheel(Distribution):
         platforms = wheel_info.group("plats").split(".")
 
         # All the tag combinations from this file
-        tags = {
-            packaging_tags.Tag(x, y, z) for x in python_versions for y in abis for z in platforms
-        }
+        tags = {packaging_tags.Tag(x, y, z) for x in python_versions for y in abis for z in platforms}
 
         return cls(
             filename=filename,
@@ -1171,18 +1110,16 @@ class PypiPackage(NameVer):
     from a repository.
     """
 
-    sdist = attr.ib(
+    sdist: Sdist = attr.ib(
         repr=False,
-        type=Sdist,
         default=None,
-        metadata=dict(help="Sdist source distribution for this package."),
+        metadata={"help": "Sdist source distribution for this package."},
     )
 
-    wheels = attr.ib(
+    wheels: list = attr.ib(
         repr=False,
-        type=list,
         default=attr.Factory(list),
-        metadata=dict(help="List of Wheel for this package"),
+        metadata={"help": "List of Wheel for this package"},
     )
 
     def get_supported_wheels(self, environment, verbose=TRACE_ULTRA_DEEP):
@@ -1232,18 +1169,14 @@ class PypiPackage(NameVer):
         for dist in dists:
             if dist.normalized_name != normalized_name:
                 if TRACE:
-                    print(
-                        f"  Skipping inconsistent dist name: expected {normalized_name} got {dist}"
-                    )
+                    print(f"  Skipping inconsistent dist name: expected {normalized_name} got {dist}")
                 continue
             elif dist.version != version:
                 dv = packaging_version.parse(dist.version)
                 v = packaging_version.parse(version)
                 if dv != v:
                     if TRACE:
-                        print(
-                            f"  Skipping inconsistent dist version: expected {version} got {dist}"
-                        )
+                        print(f"  Skipping inconsistent dist version: expected {version} got {dist}")
                     continue
 
             if isinstance(dist, Sdist):
@@ -1261,7 +1194,7 @@ class PypiPackage(NameVer):
         return package
 
     @classmethod
-    def packages_from_links(cls, links: List[Link]):
+    def packages_from_links(cls, links: list[Link]):
         """
         Yield PypiPackages built from a list of paths or URLs.
         These are sorted by name and then by version from oldest to newest.
@@ -1282,7 +1215,7 @@ class PypiPackage(NameVer):
             yield package
 
     @classmethod
-    def dists_from_links(cls, links: List[Link]):
+    def dists_from_links(cls, links: list[Link]):
         """
         Return a list of Distribution given a list of
         ``paths_or_urls`` to wheels or source distributions.
@@ -1316,7 +1249,7 @@ class PypiPackage(NameVer):
         dists = []
         if TRACE_ULTRA_DEEP:
             print("     ###paths_or_urls:", links)
-        installable: List[Link] = [link for link in links if link.url.endswith(EXTENSIONS)]
+        installable: list[Link] = [link for link in links if link.url.endswith(EXTENSIONS)]
         for link in installable:
             try:
                 dist = Distribution.from_link(link=link)
@@ -1344,16 +1277,16 @@ class PypiPackage(NameVer):
         """
         if self.sdist:
             yield self.sdist
-        for wheel in self.wheels:
-            yield wheel
+        yield from self.wheels
 
-    def get_url_for_filename(self, filename):
+    def get_url_for_filename(self, filename: str) -> Any | None:
         """
         Return the URL for this filename or None.
         """
         for dist in self.get_distributions():
             if dist.filename == filename:
                 return dist.path_or_url
+        return None
 
 
 @attr.attributes
@@ -1368,36 +1301,31 @@ class Environment:
     to the current running Python interpreter constraints.
     """
 
-    python_version = attr.ib(
-        type=str,
+    python_version: str = attr.ib(
         default="",
-        metadata=dict(help="Python version supported by this environment."),
+        metadata={"help": "Python version supported by this environment."},
     )
 
-    operating_system = attr.ib(
-        type=str,
+    operating_system: str = attr.ib(
         default="",
-        metadata=dict(help="operating system supported by this environment."),
+        metadata={"help": "operating system supported by this environment."},
     )
 
-    implementation = attr.ib(
-        type=str,
+    implementation: str = attr.ib(
         default="cp",
-        metadata=dict(help="Python implementation supported by this environment."),
+        metadata={"help": "Python implementation supported by this environment."},
         repr=False,
     )
 
-    abis = attr.ib(
-        type=list,
+    abis: list = attr.ib(
         default=attr.Factory(list),
-        metadata=dict(help="List of ABI tags supported by this environment."),
+        metadata={"help": "List of ABI tags supported by this environment."},
         repr=False,
     )
 
-    platforms = attr.ib(
-        type=list,
+    platforms: list = attr.ib(
         default=attr.Factory(list),
-        metadata=dict(help="List of platform tags supported by this environment."),
+        metadata={"help": "List of platform tags supported by this environment."},
         repr=False,
     )
 
@@ -1442,7 +1370,7 @@ class Environment:
                 impl=self.implementation or None,
                 platforms=self.platforms or None,
                 abis=self.abis or None,
-            )
+            ),
         )
 
 
@@ -1460,42 +1388,36 @@ class PypiSimpleRepository:
     PyPI simple index. It is populated lazily based on requested packages names.
     """
 
-    index_url = attr.ib(
-        type=str,
+    index_url: str = attr.ib(
         default=PYPI_SIMPLE_URL,
-        metadata=dict(help="Base PyPI simple URL for this index."),
+        metadata={"help": "Base PyPI simple URL for this index."},
     )
 
     # we keep a nested mapping of PypiPackage that has this shape:
     # {name: {version: PypiPackage, version: PypiPackage, etc}
     # the inner versions mapping is sorted by version from oldest to newest
 
-    packages = attr.ib(
-        type=dict,
+    packages: dict = attr.ib(
         default=attr.Factory(lambda: defaultdict(dict)),
-        metadata=dict(
-            help="Mapping of {name: {version: PypiPackage, version: PypiPackage, etc} available in this repo"
-        ),
+        metadata={
+            "help": "Mapping of {name: {version: PypiPackage, version: PypiPackage, etc} available in this repo",
+        },
         repr=False,
     )
 
-    fetched_package_normalized_names = attr.ib(
-        type=set,
+    fetched_package_normalized_names: set = attr.ib(
         default=attr.Factory(set),
-        metadata=dict(help="A set of already fetched package normalized names."),
+        metadata={"help": "A set of already fetched package normalized names."},
         repr=False,
     )
 
-    use_cached_index = attr.ib(
-        type=bool,
+    use_cached_index: bool = attr.ib(
         default=False,
-        metadata=dict(
-            help="If True, use any existing on-disk cached PyPI index files. Otherwise, fetch and cache."
-        ),
+        metadata={"help": "If True, use any existing on-disk cached PyPI index files. Otherwise, fetch and cache."},
         repr=False,
     )
 
-    credentials = attr.ib(type=dict, default=None)
+    credentials: dict | None = attr.ib(default=None)
 
     def _get_package_versions_map(
         self,
@@ -1507,7 +1429,8 @@ class PypiSimpleRepository:
         Return a mapping of all available PypiPackage version for this package name.
         The mapping may be empty. It is ordered by version from oldest to newest
         """
-        assert name
+        if not name:
+            raise ValueError
         normalized_name = NameVer.normalize_name(name)
         versions = self.packages[normalized_name]
         if not versions and normalized_name not in self.fetched_package_normalized_names:
@@ -1519,10 +1442,7 @@ class PypiSimpleRepository:
                     echo_func=echo_func,
                 )
                 # note that this is sorted so the mapping is also sorted
-                versions = {
-                    package.version: package
-                    for package in PypiPackage.packages_from_links(links=links)
-                }
+                versions = {package.version: package for package in PypiPackage.packages_from_links(links=links)}
                 self.packages[normalized_name] = versions
             except RemoteNotFetchedException as e:
                 if TRACE:
@@ -1549,7 +1469,7 @@ class PypiSimpleRepository:
                 name=name,
                 verbose=verbose,
                 echo_func=echo_func,
-            )
+            ),
         )
 
     def get_package_version(
@@ -1569,7 +1489,7 @@ class PypiSimpleRepository:
                     name=name,
                     verbose=verbose,
                     echo_func=echo_func,
-                ).values()
+                ).values(),
             )
             # return the latest version
             return versions and versions[-1]
@@ -1630,9 +1550,7 @@ def resolve_relative_url(package_url, url):
         if url_parts.path.startswith(".."):
             path = base_url_parts.path.rstrip("/").rsplit("/", 1)[0] + url_parts.path[2:]
         else:
-            path = urlunparse(
-                ("", "", url_parts.path, url_parts.params, url_parts.query, url_parts.fragment)
-            )
+            path = urlunparse(("", "", url_parts.path, url_parts.params, url_parts.query, url_parts.fragment))
         resolved_url_parts = base_url_parts._replace(path=path)
         url = urlunparse(resolved_url_parts)
     return url
@@ -1656,10 +1574,10 @@ class Cache:
     This is used to avoid impolite fetching from remote locations.
     """
 
-    directory = attr.ib(type=str, default=CACHE_THIRDPARTY_DIR)
+    directory: str = attr.ib(default=CACHE_THIRDPARTY_DIR)
 
     def __attrs_post_init__(self):
-        os.makedirs(self.directory, exist_ok=True)
+        Path(self.directory).mkdir(exist_ok=True)
 
     def get(
         self,
@@ -1677,9 +1595,9 @@ class Cache:
         to a file.
         """
         cache_key = quote_plus(path_or_url.strip("/"))
-        cached = os.path.join(self.directory, cache_key)
+        cached: Path = Path(self.directory) / cache_key
 
-        if force or not os.path.exists(cached):
+        if force or not cached.exists():
             if TRACE_DEEP:
                 print(f"        FILE CACHE MISS: {path_or_url}")
             content = get_file_content(
@@ -1690,13 +1608,13 @@ class Cache:
                 echo_func=echo_func,
             )
             wmode = "w" if as_text else "wb"
-            with open(cached, wmode) as fo:
+            with cached.open(wmode) as fo:
                 fo.write(content)
             return content
         else:
             if TRACE_DEEP:
                 print(f"        FILE CACHE HIT: {path_or_url}")
-            return get_local_file_content(path=cached, as_text=as_text)
+            return get_local_file_content(path=cached.as_posix(), as_text=as_text)
 
 
 CACHE = Cache()
@@ -1725,16 +1643,14 @@ def get_file_content(
         )
         return content
 
-    elif path_or_url.startswith("file://") or (
-        path_or_url.startswith("/") and os.path.exists(path_or_url)
-    ):
+    elif path_or_url.startswith("file://") or (path_or_url.startswith("/") and os.path.exists(path_or_url)):
         return get_local_file_content(path=path_or_url, as_text=as_text)
 
     else:
         raise Exception(f"Unsupported URL scheme: {path_or_url}")
 
 
-def get_local_file_content(path, as_text=True):
+def get_local_file_content(path: str, as_text=True):
     """
     Return the content at `url` as text. Return the content as bytes is
     `as_text` is False.
@@ -1743,7 +1659,7 @@ def get_local_file_content(path, as_text=True):
         path = path[7:]
 
     mode = "r" if as_text else "rb"
-    with open(path, mode) as fo:
+    with Path(path).open(mode=mode) as fo:
         return fo.read()
 
 
@@ -1760,6 +1676,7 @@ def get_remote_file_content(
     _delay=0,
     verbose=False,
     echo_func=None,
+    timeout: int = 3600,
 ):
     """
     Fetch and return a tuple of (headers, content) at `url`. Return content as a
@@ -1771,26 +1688,20 @@ def get_remote_file_content(
     and this with an increasing delay.
     """
     time.sleep(_delay)
-    headers = headers or {}
+    headers = headers or None
     # using a GET with stream=True ensure we get the the final header from
     # several redirects and that we can ignore content there. A HEAD request may
     # not get us this last header
     if verbose and not echo_func:
         echo_func = print
-    if verbose:
+    if verbose and echo_func:
         echo_func(f"DOWNLOADING: {url}")
 
     auth = None
     if credentials:
         auth = (credentials.get("login"), credentials.get("password"))
 
-    stream = requests.get(
-        url,
-        allow_redirects=True,
-        stream=True,
-        headers=headers,
-        auth=auth,
-    )
+    stream = requests.get(url, allow_redirects=True, stream=True, headers=headers, auth=auth, timeout=timeout)
 
     with stream as response:
         status = response.status_code
@@ -1838,8 +1749,8 @@ def fetch_and_save(
         verbose=verbose,
         echo_func=echo_func,
     )
-    output = os.path.join(dest_dir, filename)
+    output: Path = Path(dest_dir) / filename
     wmode = "w" if as_text else "wb"
-    with open(output, wmode) as fo:
+    with output.open(wmode) as fo:
         fo.write(content)
     return content
