@@ -6,8 +6,9 @@
 # See https://github.com/aboutcode-org/scancode-toolkit for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
+from __future__ import annotations
 
 from python_inspector.settings import Settings
 
 # Initialize global settings
-settings = Settings() # type: ignore
+settings = Settings()
