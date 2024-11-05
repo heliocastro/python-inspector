@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -34,3 +35,4 @@ class Settings(BaseSettings):
     INDEX_URL: str = "https://pypi.org/simple"
     EXTRA_INDEX_URLS: list[str] | None = None
     TRACE: TraceLevel | None = None
+    CACHE_THIRDPARTY_DIR: Path = Path.home() / ".cache/python_inspector"

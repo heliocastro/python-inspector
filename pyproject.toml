@@ -46,6 +46,7 @@ dparse2 = "^0.7.0"
 pkginfo2 = "^30.0.0"
 mock = "^5.1.0"
 importlib-metadata = "^8.5.0"
+tenacity = "^9.0.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.11.2"

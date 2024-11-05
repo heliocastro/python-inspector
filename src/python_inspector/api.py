@@ -18,6 +18,7 @@ from typing import NamedTuple
 
 from packageurl import PackageURL
 from packvers.requirements import Requirement
+from requests.auth import HTTPBasicAuth
 from resolvelib import BaseReporter, Resolver
 
 from _packagedcode.models import DependentPackage, PackageData
@@ -213,11 +214,11 @@ def resolve_dependencies(
         if generic_paths:
             setup_py_file = utils.remove_test_data_dir_variable_prefix(path=setup_py_file)
         files.append(
-            dict(
-                type="file",
-                path=setup_py_file,
-                package_data=file_package_data,
-            ),
+            {
+                "type": "file",
+                "path": setup_py_file,
+                "package_data": file_package_data,
+            },
         )
 
     if not direct_dependencies:
@@ -250,7 +251,9 @@ def resolve_dependencies(
             # Always use credential if available
             if parsed_netrc:
                 login, password = utils.get_netrc_auth(index_url, parsed_netrc)
-                credentials = {"login": login, "password": password} if login and password else None
+                credentials: HTTPBasicAuth | None = (
+                    HTTPBasicAuth(username=login, password=password) if login and password else None
+                )
             if existing:
                 existing.use_cached_index = use_cached_index
                 existing.credentials = credentials
