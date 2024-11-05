@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright (c) nexB Inc. and others. All rights reserved.
 # ScanCode is a trademark of nexB Inc.
@@ -8,18 +7,14 @@
 # See https://github.com/aboutcode-org/python-inspector for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
-
-from typing import Dict
+from __future__ import annotations
 
 import click
 
 from python_inspector import settings, utils_pypi
+from python_inspector.__version__ import __version__
 from python_inspector.cli_utils import FileOptionType
-from python_inspector.settings import TraceLevel
 from python_inspector.utils import write_output_in_file
-
-__version__ = "0.12.0"
-
 
 
 def print_version(ctx, param, value):
@@ -39,8 +34,7 @@ def print_version(ctx, param, value):
     metavar="REQUIREMENT-FILE",
     multiple=True,
     required=False,
-    help="Path to pip requirements file listing thirdparty packages. "
-    "This option can be used multiple times.",
+    help="Path to pip requirements file listing thirdparty packages. " "This option can be used multiple times.",
 )
 @click.option(
     "-s",
@@ -81,8 +75,7 @@ def print_version(ctx, param, value):
     metavar="OS",
     show_default=True,
     required=True,
-    help="OS to use for dependency resolution. One of " +
-    ", ".join(utils_pypi.PLATFORMS_BY_OS),
+    help="OS to use for dependency resolution. One of " + ", ".join(utils_pypi.PLATFORMS_BY_OS),
 )
 @click.option(
     "--index-url",
@@ -91,7 +84,7 @@ def print_version(ctx, param, value):
     metavar="INDEX",
     show_default=True,
     required=False,
-    help="PyPI default index URL to use. Defaults to pypi.org refistry."
+    help="PyPI default index URL to use. Defaults to pypi.org refistry.",
 )
 @click.option(
     "--extra-index-urls",
@@ -144,8 +137,7 @@ def print_version(ctx, param, value):
     "--use-cached-index",
     is_flag=True,
     hidden=True,
-    help="Use cached on-disk PyPI simple package indexes "
-    "and do not refetch package index if cache is present.",
+    help="Use cached on-disk PyPI simple package indexes " "and do not refetch package index if cache is present.",
 )
 @click.option(
     "--use-pypi-json-api",
@@ -170,18 +162,14 @@ def print_version(ctx, param, value):
     is_flag=True,
     help="Enable verbose debug output.",
 )
-@click.option(
-    "-V",
+@click.version_option(
+    __version__,
+    "-v",
     "--version",
-    is_flag=True,
-    is_eager=True,
-    expose_value=False,
-    callback=print_version,
-    help="Show the version and exit.",
+    prog_name="python-inspector",
+    message="%(prog)s version %(version)s",
 )
-@click.option(
-    "--ignore-errors", is_flag=True, default=False, help="Ignore errors and continue execution."
-)
+@click.option("--ignore-errors", is_flag=True, default=False, help="Ignore errors and continue execution.")
 @click.help_option("-h", "--help")
 @click.option(
     "--generic-paths",
@@ -235,8 +223,7 @@ def resolve_dependencies(
     from python_inspector.api import resolve_dependencies as resolver_api
 
     if not (json_output or pdt_output):
-        click.secho(
-            "No output file specified. Use --json or --json-pdt.", err=True)
+        click.secho("No output file specified. Use --json or --json-pdt.", err=True)
         ctx.exit(1)
 
     if json_output and pdt_output:
@@ -267,7 +254,7 @@ def resolve_dependencies(
         settings.EXTRA_INDEX_URLS = extra_index_urls
 
     try:
-        resolution_result: Dict = resolver_api(
+        resolution_result: dict = resolver_api(
             requirement_files=requirement_files,
             setup_py_file=setup_py_file,
             specifiers=specifiers,
@@ -349,8 +336,7 @@ def get_pretty_options(ctx, generic_paths=False):
             value = [value]
 
         for val in value:
-            val = get_pretty_value(param_type=param.type,
-                                   value=val, generic_paths=generic_paths)
+            val = get_pretty_value(param_type=param.type, value=val, generic_paths=generic_paths)
 
             if isinstance(param, click.Argument):
                 args.append(val)

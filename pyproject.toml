@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "python-inspector-cariad"
-version = "1.12.1.99"
+version = "0.12.1.1"
 description = "Cariad Python INspector version"
 authors = [
     "Helio Chissini de Castro <helio.chissini.de.castro@cariad.technology>",
@@ -45,6 +45,7 @@ pydantic-settings = "^2.5.2"
 dparse2 = "^0.7.0"
 pkginfo2 = "^30.0.0"
 mock = "^5.1.0"
+importlib-metadata = "^8.5.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.11.2"

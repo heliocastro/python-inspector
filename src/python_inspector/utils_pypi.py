@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright (c) nexB Inc. and others. All rights reserved.
 # ScanCode is a trademark of nexB Inc.
@@ -8,16 +7,19 @@
 # See https://github.com/nexB/skeleton for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
+from __future__ import annotations
+
 import email
 import itertools
 import os
-import pathlib
 import re
 import shutil
 import tempfile
 import time
 from collections import defaultdict
-from typing import List, NamedTuple
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any, NamedTuple
 from urllib.parse import quote_plus, unquote, urlparse, urlunparse
 
 import attr
@@ -178,12 +180,12 @@ if not CACHE_THIRDPARTY_DIR:
     try:
         os.makedirs(CACHE_THIRDPARTY_DIR, exist_ok=True)
     except Exception:
-        home = pathlib.Path.home()
+        home = Path.home()
         CACHE_THIRDPARTY_DIR = str(home / ".cache/python_inspector")
         os.makedirs(CACHE_THIRDPARTY_DIR, exist_ok=True)
 
 
-PYPI_INDEX_URLS = (settings.INDEX_URL)
+PYPI_INDEX_URLS = settings.INDEX_URL
 
 ################################################################################
 
@@ -231,14 +233,10 @@ def download_wheel(
 
     fetched_wheel_filenames = []
     for repo in repos:
-        supported_and_valid_wheels = get_supported_and_valid_wheels(
-            repo, name, version, environment, python_version
-        )
+        supported_and_valid_wheels = get_supported_and_valid_wheels(repo, name, version, environment, python_version)
         if not supported_and_valid_wheels:
             if settings.TRACE == TraceLevel.TRACE_DEEP:
-                print(
-                    f"    download_wheel: No supported and valid wheel for {name}=={version}: {environment} "
-                )
+                print(f"    download_wheel: No supported and valid wheel for {name}=={version}: {environment} ")
             continue
         for wheel in supported_and_valid_wheels:
             fetched_wheel_filename = wheel.download(
@@ -258,18 +256,14 @@ def get_valid_sdist(repo, name, version, python_version=settings.DEFAULT_PYTHON_
     package = repo.get_package_version(name=name, version=version)
     if not package:
         if settings.TRACE == TraceLevel.TRACE_DEEP:
-            print(
-                print(f"    get_valid_sdist: No package in {repo.index_url} for {name}=={version}")
-            )
+            print(print(f"    get_valid_sdist: No package in {repo.index_url} for {name}=={version}"))
         return
     sdist = package.sdist
     if not sdist:
         if settings.TRACE == TraceLevel.TRACE_DEEP:
             print(f"    get_valid_sdist: No sdist for {name}=={version}")
         return
-    if not valid_python_version(
-        python_requires=sdist.python_requires, python_version=python_version
-    ):
+    if not valid_python_version(python_requires=sdist.python_requires, python_version=python_version):
         return
     if settings.TRACE == TraceLevel.TRACE_DEEP:
         print(f"    get_valid_sdist: Getting sdist from index (or cache): {sdist.download_url}")
@@ -277,35 +271,33 @@ def get_valid_sdist(repo, name, version, python_version=settings.DEFAULT_PYTHON_
 
 
 def get_supported_and_valid_wheels(
-    repo, name, version, environment, python_version=settings.DEFAULT_PYTHON_VERSION
-) -> List:
+    repo,
+    name,
+    version,
+    environment,
+    python_version=settings.DEFAULT_PYTHON_VERSION,
+) -> list:
     """
     Return a list of wheels matching the ``environment`` Environment constraints.
     """
     package = repo.get_package_version(name=name, version=version)
     if not package:
         if settings.TRACE == TraceLevel.TRACE_DEEP:
-            print(
-                f"    get_supported_and_valid_wheels: No package in {repo.index_url} for {name}=={version}"
-            )
+            print(f"    get_supported_and_valid_wheels: No package in {repo.index_url} for {name}=={version}")
         return []
     supported_wheels = list(package.get_supported_wheels(environment=environment))
     if not supported_wheels:
         if settings.TRACE == TraceLevel.TRACE_DEEP:
-            print(
-                f"    get_supported_and_valid_wheels: No supported wheel for {name}=={version}: {environment}"
-            )
+            print(f"    get_supported_and_valid_wheels: No supported wheel for {name}=={version}: {environment}")
         return []
     wheels = []
     for wheel in supported_wheels:
-        if not valid_python_version(
-            python_requires=wheel.python_requires, python_version=python_version
-        ):
+        if not valid_python_version(python_requires=wheel.python_requires, python_version=python_version):
             continue
         if settings.TRACE == TraceLevel.TRACE_DEEP:
             print(
                 f"""    get_supported_and_valid_wheels: Getting wheel from index (or cache):
-                {wheel.download_url}"""
+                {wheel.download_url}""",
             )
         wheels.append(wheel)
     return wheels
@@ -417,7 +409,6 @@ class Link(NamedTuple):
 
 @attr.attributes
 class Distribution(NameVer):
-
     """
     A Distribution is either either a Wheel or Sdist and is identified by and
     created from its filename as well as its name and version. A Distribution is
@@ -592,7 +583,7 @@ class Distribution(NameVer):
                 version=self.version,
                 subpath=self.subpath,
                 qualifiers=self.qualifiers,
-            )
+            ),
         )
 
     @property
@@ -615,19 +606,14 @@ class Distribution(NameVer):
             package = repo.get_package_version(name=self.name, version=self.version)
             if not package:
                 if settings.TRACE == TraceLevel.TRACE:
-                    print(
-                        f"     get_best_download_url: {self.name}=={self.version} "
-                        f"not found in {repo.index_url}"
-                    )
+                    print(f"     get_best_download_url: {self.name}=={self.version} " f"not found in {repo.index_url}")
                 continue
             pypi_url = package.get_url_for_filename(self.filename)
             if pypi_url:
                 return pypi_url
             else:
                 if settings.TRACE == TraceLevel.TRACE:
-                    print(
-                        f"     get_best_download_url: {self.filename} not found in {repo.index_url}"
-                    )
+                    print(f"     get_best_download_url: {self.filename} not found in {repo.index_url}")
 
     def download(
         self,
@@ -681,7 +667,7 @@ class Distribution(NameVer):
             (
                 ".zip",
                 ".tar.gz",
-            )
+            ),
         ):
             return Sdist
         raise InvalidDistributionFilename(filename)
@@ -755,7 +741,7 @@ class Distribution(NameVer):
                     (
                         "PKG-INFO",
                         "METADATA",
-                    )
+                    ),
                 ):
                     with open(pi) as fi:
                         return fi.read()
@@ -773,9 +759,7 @@ class Distribution(NameVer):
 
         classifiers = raw_data.get_all("Classifier") or []
 
-        declared_license = [raw_data["License"]] + [
-            c for c in classifiers if c.startswith("License")
-        ]
+        declared_license = [raw_data["License"]] + [c for c in classifiers if c.startswith("License")]
         other_classifiers = [c for c in classifiers if not c.startswith("License")]
 
         holder = raw_data["Author"]
@@ -819,10 +803,7 @@ class Distribution(NameVer):
             purl_from_data = packageurl.PackageURL.from_string(package_url)
             purl_from_self = packageurl.PackageURL.from_string(self.package_url)
             if purl_from_data != purl_from_self:
-                print(
-                    f"Invalid dist update attempt, no same same purl with dist: "
-                    f"{self} using data {data}."
-                )
+                print(f"Invalid dist update attempt, no same same purl with dist: " f"{self} using data {data}.")
                 return
 
         data.pop("about_resource", None)
@@ -989,7 +970,6 @@ class Sdist(Distribution):
 
 @attr.attributes
 class Wheel(Distribution):
-
     """
     Represents a wheel file.
 
@@ -1084,9 +1064,7 @@ class Wheel(Distribution):
         platforms = wheel_info.group("plats").split(".")
 
         # All the tag combinations from this file
-        tags = {
-            packaging_tags.Tag(x, y, z) for x in python_versions for y in abis for z in platforms
-        }
+        tags = {packaging_tags.Tag(x, y, z) for x in python_versions for y in abis for z in platforms}
 
         return cls(
             filename=filename,
@@ -1223,18 +1201,14 @@ class PypiPackage(NameVer):
         for dist in dists:
             if dist.normalized_name != normalized_name:
                 if TRACE:
-                    print(
-                        f"  Skipping inconsistent dist name: expected {normalized_name} got {dist}"
-                    )
+                    print(f"  Skipping inconsistent dist name: expected {normalized_name} got {dist}")
                 continue
             elif dist.version != version:
                 dv = packaging_version.parse(dist.version)
                 v = packaging_version.parse(version)
                 if dv != v:
                     if TRACE:
-                        print(
-                            f"  Skipping inconsistent dist version: expected {version} got {dist}"
-                        )
+                        print(f"  Skipping inconsistent dist version: expected {version} got {dist}")
                     continue
 
             if isinstance(dist, Sdist):
@@ -1252,7 +1226,7 @@ class PypiPackage(NameVer):
         return package
 
     @classmethod
-    def packages_from_links(cls, links: List[Link]):
+    def packages_from_links(cls, links: list[Link]):
         """
         Yield PypiPackages built from a list of paths or URLs.
         These are sorted by name and then by version from oldest to newest.
@@ -1273,7 +1247,7 @@ class PypiPackage(NameVer):
             yield package
 
     @classmethod
-    def dists_from_links(cls, links: List[Link]):
+    def dists_from_links(cls, links: list[Link]):
         """
         Return a list of Distribution given a list of
         ``paths_or_urls`` to wheels or source distributions.
@@ -1307,7 +1281,7 @@ class PypiPackage(NameVer):
         dists = []
         if settings.TRACE == TraceLevel.TRACE_ULTRA_DEEP:
             print("     ###paths_or_urls:", links)
-        installable: List[Link] = [link for link in links if link.url.endswith(EXTENSIONS)]
+        installable: list[Link] = [link for link in links if link.url.endswith(EXTENSIONS)]
         for link in installable:
             try:
                 dist = Distribution.from_link(link=link)
@@ -1433,7 +1407,7 @@ class Environment:
                 impl=self.implementation or None,
                 platforms=self.platforms or None,
                 abis=self.abis or None,
-            )
+            ),
         )
 
 
@@ -1465,7 +1439,7 @@ class PypiSimpleRepository:
         type=dict,
         default=attr.Factory(lambda: defaultdict(dict)),
         metadata=dict(
-            help="Mapping of {name: {version: PypiPackage, version: PypiPackage, etc} available in this repo"
+            help="Mapping of {name: {version: PypiPackage, version: PypiPackage, etc} available in this repo",
         ),
         repr=False,
     )
@@ -1480,9 +1454,7 @@ class PypiSimpleRepository:
     use_cached_index = attr.ib(
         type=bool,
         default=False,
-        metadata=dict(
-            help="If True, use any existing on-disk cached PyPI index files. Otherwise, fetch and cache."
-        ),
+        metadata=dict(help="If True, use any existing on-disk cached PyPI index files. Otherwise, fetch and cache."),
         repr=False,
     )
 
@@ -1510,10 +1482,7 @@ class PypiSimpleRepository:
                     echo_func=echo_func,
                 )
                 # note that this is sorted so the mapping is also sorted
-                versions = {
-                    package.version: package
-                    for package in PypiPackage.packages_from_links(links=links)
-                }
+                versions = {package.version: package for package in PypiPackage.packages_from_links(links=links)}
                 self.packages[normalized_name] = versions
             except RemoteNotFetchedException as e:
                 if settings.TRACE == TraceLevel.TRACE:
@@ -1540,7 +1509,7 @@ class PypiSimpleRepository:
                 name=name,
                 verbose=verbose,
                 echo_func=echo_func,
-            )
+            ),
         )
 
     def get_package_version(
@@ -1560,7 +1529,7 @@ class PypiSimpleRepository:
                     name=name,
                     verbose=verbose,
                     echo_func=echo_func,
-                ).values()
+                ).values(),
             )
             # return the latest version
             return versions and versions[-1]
@@ -1621,9 +1590,7 @@ def resolve_relative_url(package_url, url):
         if url_parts.path.startswith(".."):
             path = base_url_parts.path.rstrip("/").rsplit("/", 1)[0] + url_parts.path[2:]
         else:
-            path = urlunparse(
-                ("", "", url_parts.path, url_parts.params, url_parts.query, url_parts.fragment)
-            )
+            path = urlunparse(("", "", url_parts.path, url_parts.params, url_parts.query, url_parts.fragment))
         resolved_url_parts = base_url_parts._replace(path=path)
         url = urlunparse(resolved_url_parts)
     return url
@@ -1647,7 +1614,7 @@ class Cache:
     This is used to avoid impolite fetching from remote locations.
     """
 
-    directory = attr.ib(type=str, default=CACHE_THIRDPARTY_DIR)
+    directory: str = CACHE_THIRDPARTY_DIR
 
     def __attrs_post_init__(self):
         os.makedirs(self.directory, exist_ok=True)
@@ -1694,12 +1661,12 @@ CACHE = Cache()
 
 
 def get_file_content(
-    path_or_url,
-    credentials,
-    as_text=True,
-    verbose=False,
-    echo_func=None,
-):
+    path_or_url: str,
+    credentials: tuple[str, str],
+    as_text: bool = True,
+    verbose: bool = False,
+    echo_func: Callable[[str], None] = None,
+) -> Any:
     """
     Fetch and return the content at `path_or_url` from either a local path or a
     remote URL. Return the content as bytes is `as_text` is False.
@@ -1716,16 +1683,14 @@ def get_file_content(
         )
         return content
 
-    elif path_or_url.startswith("file://") or (
-        path_or_url.startswith("/") and os.path.exists(path_or_url)
-    ):
+    elif path_or_url.startswith("file://") or (path_or_url.startswith("/") and os.path.exists(path_or_url)):
         return get_local_file_content(path=path_or_url, as_text=as_text)
 
     else:
-        raise Exception(f"Unsupported URL scheme: {path_or_url}")
+        raise ValueError(f"Unsupported URL scheme: {path_or_url}")
 
 
-def get_local_file_content(path, as_text=True):
+def get_local_file_content(path: str, as_text: bool = True) -> Any:
     """
     Return the content at `url` as text. Return the content as bytes is
     `as_text` is False.
@@ -1734,7 +1699,7 @@ def get_local_file_content(path, as_text=True):
         path = path[7:]
 
     mode = "r" if as_text else "rb"
-    with open(path, mode) as fo:
+    with Path(path).open(mode) as fo:
         return fo.read()
 
 

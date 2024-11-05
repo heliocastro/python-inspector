@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright (c) nexB Inc. and others. All rights reserved.
 # ScanCode is a trademark of nexB Inc.
@@ -8,44 +7,47 @@
 # See https://github.com/aboutcode-org/python-inspector for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
+from __future__ import annotations
 
 import json
-import os
-from typing import Dict
-from typing import List
-from typing import NamedTuple
+from netrc import netrc
+from pathlib import Path
+from typing import Any, NamedTuple
+from urllib.parse import urlparse
 
 import requests
 
 
-def get_netrc_auth(url, netrc):
+def get_netrc_auth(url: str, parsed_netrc: netrc) -> tuple[str | None, str | None]:
     """
     Return login and password if url is in netrc
     else return login and password as None
     """
-    hosts = netrc.hosts
-    if url in hosts:
-        url_auth = hosts.get(url)
-        # netrc returns a tuple of (login, account, password)
-        return (url_auth[0], url_auth[2])
+
+    parsed_url = urlparse(url)
+    if parsed_url.hostname:
+        credentials = parsed_netrc.authenticators(parsed_url.hostname)
+        if credentials:
+            return (credentials[0], credentials[2])
     return (None, None)
 
 
-def contain_string(string: str, files: List) -> bool:
+def contain_string(string: str, files: list[str]) -> bool:
     """
     Return True if the ``string`` is contained in any of the ``files`` list of file paths.
     """
     for file in files:
-        if not os.path.exists(file):
+        file_path: Path = Path(file)
+        if not file_path.exists():
             continue
-        with open(file, encoding="utf-8") as f:
+        with file_path.open() as fp:
             # TODO also consider other file names
-            if string in f.read():
+            if string in fp.read():
                 return True
     return False
 
 
-def write_output_in_file(output, location):
+def write_output_in_file(output: str, location: Any) -> str:
     """
     Write headers, requirements and resolved_dependencies as JSON to ``json_output``.
     Return the output data.
@@ -64,17 +66,17 @@ class Candidate(NamedTuple):
     extras: str
 
 
-def get_response(url: str) -> Dict:
+def get_response(url: str) -> Any:
     """
     Return a mapping of the JSON response from fetching ``url``
     or None if the ``url`` cannot be fetched..
     """
-    resp = requests.get(url)
+    resp = requests.get(url, timeout=120)
     if resp.status_code == 200:
         return resp.json()
 
 
-def remove_test_data_dir_variable_prefix(path, placeholder="<file>"):
+def remove_test_data_dir_variable_prefix(path: str, placeholder: str = "<file>") -> str:
     """
     Return a clean path, removing variable test path prefix or using a ``placeholder``.
     Used for testing to ensure that results are stable across runs.

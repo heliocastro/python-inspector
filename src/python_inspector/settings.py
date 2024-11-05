@@ -28,6 +28,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         env_prefix="PYTHON_INSPECTOR_",
         case_sensitive=True,
+        extra="allow",
     )
     DEFAULT_PYTHON_VERSION: str = "38"
     INDEX_URL: str = "https://pypi.org/simple"
