@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "python-inspector-cariad"
-version = "0.12.1.1"
+version = "0.12.1.2"
 description = "Cariad Python INspector version"
 authors = [
     "Helio Chissini de Castro <helio.chissini.de.castro@cariad.technology>",

@@ -35,15 +35,11 @@ from _packagedcode.pypi import (
 )
 from python_inspector import settings
 from python_inspector.error import NoVersionsFound
+from python_inspector.models import Environment
+from python_inspector.models.pypisimplerepository import PypiSimpleRepository
 from python_inspector.setup_py_live_eval import iter_requirements
 from python_inspector.utils import Candidate, contain_string, get_response
-from python_inspector.utils_pypi import (
-    Environment,
-    PypiSimpleRepository,
-    download_sdist,
-    download_wheel,
-    valid_python_version,
-)
+from python_inspector.utils_pypi import download_sdist, download_wheel, valid_python_version
 
 
 class Result(NamedTuple):
