@@ -6,7 +6,39 @@
 # See https://aboutcode.org for more information about nexB OSS projects.
 from __future__ import annotations
 
-from pydantic import BaseModel
+from collections.abc import Callable
+from typing import Any
+from urllib.parse import urlparse, urlunparse
+
+from bs4 import BeautifulSoup
+from pydantic import BaseModel, Field
+from requests.auth import HTTPBasicAuth
+
+from python_inspector import settings
+from python_inspector.models import Cache, Link, NameVer
+from python_inspector.models.pypipackage import PypiPackage
+from python_inspector.settings import TraceLevel
+
+"""
+- A PypiSimpleRepository is a PyPI "simple" index where a HTML page is listing
+  package name links. Each such link points to an HTML page listing URLs to all
+  wheels and sdsist of all versions of this package.
+
+PypiSimpleRepository and Packages are related through packages name, version and
+filenames.
+"""
+
+# PYPI_PUBLIC_REPO = PypiSimpleRepository(index_url=settings.INDEX_URL)
+# DEFAULT_PYPI_REPOS = (PYPI_PUBLIC_REPO,)
+# DEFAULT_PYPI_REPOS_BY_URL = {r.index_url: r for r in DEFAULT_PYPI_REPOS}
+
+
+def get_default_repo() -> tuple[PypiSimpleRepository]:
+    return (PypiSimpleRepository(index_url=settings.INDEX_URL),)
+
+
+class RemoteNotFetchedExceptionError(Exception):
+    pass
 
 
 class PypiSimpleRepository(BaseModel):
@@ -15,38 +47,33 @@ class PypiSimpleRepository(BaseModel):
     PyPI simple index. It is populated lazily based on requested packages names.
     """
 
-    index_url: str = attr.ib(
+    index_url: str = Field(
         default=settings.INDEX_URL,
-        metadata={"help": "Base PyPI simple URL for this index."},
+        description="Base PyPI simple URL for this index.",
     )
 
     # we keep a nested mapping of PypiPackage that has this shape:
     # {name: {version: PypiPackage, version: PypiPackage, etc}
     # the inner versions mapping is sorted by version from oldest to newest
 
-    packages: dict = attr.ib(
-        default=attr.Factory(lambda: defaultdict(dict)),
-        metadata={
-            "help": "Mapping of {name: {version: PypiPackage, version: PypiPackage, etc} available in this repo",
-        },
-        repr=False,
+    packages: dict[str, Any] = Field(
+        default_factory=(dict),
+        description="Mapping of {name: {version: PypiPackage, version: PypiPackage, etc} available in this repo",
     )
 
-    fetched_package_normalized_names: set = attr.ib(
-        default=attr.Factory(set),
-        metadata={"help": "A set of already fetched package normalized names."},
-        repr=False,
+    fetched_package_normalized_names: set[str] = Field(
+        default_factory=set,
+        description="A set of already fetched package normalized names.",
     )
 
-    use_cached_index: bool = attr.ib(
+    use_cached_index: bool = Field(
         default=True,
-        metadata={"help": "If True, use any existing on-disk cached PyPI index files. Otherwise, fetch and cache."},
-        repr=False,
+        description="If True, use any existing on-disk cached PyPI index files. Otherwise, fetch and cache.",
     )
 
-    credentials: HTTPBasicAuth | None = attr.ib(
+    credentials: HTTPBasicAuth | None = Field(
         default=None,
-        metadata={"help": "Basic authentication"},
+        description="Basic authentication",
     )
 
     def _get_package_versions_map(
@@ -54,7 +81,7 @@ class PypiSimpleRepository(BaseModel):
         name: str,
         verbose: bool = False,
         echo_func: Callable[[str], None] | None = None,
-    ) -> dict[str, PypiPackage | None]:
+    ) -> dict[str, PypiPackage]:
         """
         Return a mapping of all available PypiPackage version for this package name.
         The mapping may be empty. It is ordered by version from oldest to newest
@@ -74,7 +101,7 @@ class PypiSimpleRepository(BaseModel):
                 # note that this is sorted so the mapping is also sorted
                 versions = {package.version: package for package in PypiPackage.packages_from_links(links=links)}
                 self.packages[normalized_name] = versions
-            except RemoteNotFetchedException as e:
+            except RemoteNotFetchedExceptionError as e:
                 if settings.TRACE == TraceLevel.TRACE:
                     print(f"failed to fetch package name: {name} from: {self.index_url}:\n{e}")
 
@@ -85,30 +112,28 @@ class PypiSimpleRepository(BaseModel):
 
     def get_package_versions(
         self,
-        name,
-        verbose=False,
-        echo_func=None,
-    ):
+        name: str,
+        verbose: bool = False,
+        echo_func: Callable[[str], None] | None = None,
+    ) -> dict[str, PypiPackage]:
         """
         Return a mapping of all available PypiPackage version as{version:
         package} for this package name. The mapping may be empty but not None.
         It is sorted by version from oldest to newest.
         """
-        return dict(
-            self._get_package_versions_map(
-                name=name,
-                verbose=verbose,
-                echo_func=echo_func,
-            ),
+        return self._get_package_versions_map(
+            name=name,
+            verbose=verbose,
+            echo_func=echo_func,
         )
 
     def get_package_version(
         self,
-        name,
-        version=None,
-        verbose=False,
-        echo_func=None,
-    ):
+        name: str,
+        version: str | None = None,
+        verbose: bool = False,
+        echo_func: Callable[[str], None] | None = None,
+    ) -> PypiPackage | None:
         """
         Return the PypiPackage with name and version or None.
         Return the latest PypiPackage version if version is None.
@@ -122,7 +147,7 @@ class PypiSimpleRepository(BaseModel):
                 ).values(),
             )
             # return the latest version
-            return versions and versions[-1]
+            return versions.pop()
         else:
             return self._get_package_versions_map(
                 name=name,
@@ -143,7 +168,7 @@ class PypiSimpleRepository(BaseModel):
         package_url = f"{self.index_url}/{normalized_name}"
         print(self.use_cached_index)
         exit(1)
-        text = CACHE.get(
+        text = Cache().get(
             path_or_url=package_url,
             credentials=self.credentials,
             as_text=True,
@@ -160,7 +185,28 @@ class PypiSimpleRepository(BaseModel):
             if "data-requires-python" in anchor_tag.attrs:
                 python_requires = anchor_tag.attrs["data-requires-python"]
             # Resolve relative URL
-            url = resolve_relative_url(package_url, url)
+            url = self.resolve_relative_url(package_url, url)
             links.append(Link(url=url, python_requires=python_requires))
         # TODO: keep sha256
         return links
+
+    def resolve_relative_url(self, package_url: str, url: str) -> str:
+        """
+        Return the resolved `url` URLstring given a `package_url` base URL string
+        of a package.
+
+        For example:
+        >>> resolve_relative_url("https://example.com/package", "../path/file.txt")
+        'https://example.com/path/file.txt'
+        """
+        if not url.startswith(("http://", "https://")):
+            base_url_parts = urlparse(package_url)
+            url_parts = urlparse(url)
+            # If the relative URL starts with '..', remove the last directory from the base URL
+            if url_parts.path.startswith(".."):
+                path = base_url_parts.path.rstrip("/").rsplit("/", 1)[0] + url_parts.path[2:]
+            else:
+                path = urlunparse(("", "", url_parts.path, url_parts.params, url_parts.query, url_parts.fragment))
+            resolved_url_parts = base_url_parts._replace(path=path)
+            url = urlunparse(resolved_url_parts)
+        return url
