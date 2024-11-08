@@ -20,11 +20,11 @@ from pydantic import Field
 from requests.auth import HTTPBasicAuth
 
 from python_inspector import settings
+from python_inspector.core.settings import TraceLevel
 from python_inspector.models import Cache, Link, NameVer
 from python_inspector.models.pypisimplerepository import PypiSimpleRepository, get_default_repo
 from python_inspector.models.sdist import Sdist
 from python_inspector.models.wheel import Wheel
-from python_inspector.core.settings import TraceLevel
 
 """
 - A Distribution (either a Wheel or Sdist) is identified by and created from its

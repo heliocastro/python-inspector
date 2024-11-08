@@ -15,9 +15,9 @@ from pydantic import BaseModel, Field
 from requests.auth import HTTPBasicAuth
 
 from python_inspector import settings
+from python_inspector.core.settings import TraceLevel
 from python_inspector.models import Cache, Link, NameVer
 from python_inspector.models.pypipackage import PypiPackage
-from python_inspector.core.settings import TraceLevel
 
 """
 - A PypiSimpleRepository is a PyPI "simple" index where a HTML page is listing

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import os
 import platform
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Generator, Sequence
 from netrc import netrc
 from pathlib import Path
 from typing import NamedTuple
@@ -24,6 +24,7 @@ from resolvelib import BaseReporter, Resolver
 from _packagedcode.models import DependentPackage, PackageData
 from _packagedcode.pypi import PipRequirementsFileHandler, PythonSetupPyHandler, can_process_dependent_package
 from python_inspector import dependencies, settings, utils, utils_pypi
+from python_inspector.core.settings import TraceLevel
 from python_inspector.package_data import get_pypi_data_from_purl
 from python_inspector.resolution import (
     PythonInputProvider,
@@ -35,7 +36,6 @@ from python_inspector.resolution import (
     get_reqs_insecurely,
     get_requirements_from_python_manifest,
 )
-from python_inspector.core.settings import TraceLevel
 from python_inspector.utils_pypi import PLATFORMS_BY_OS, Environment, valid_python_versions
 
 
@@ -407,7 +407,7 @@ def get_requirements_from_direct_dependencies(
                 yield req
 
 
-def get_dependent_packages_from_reqs(requirements: list[Requirement]):
+def get_dependent_packages_from_reqs(requirements: list[Requirement]) -> Generator[DependentPackage, None, None]:
     for req in requirements:
         yield DependentPackage(
             purl=str(

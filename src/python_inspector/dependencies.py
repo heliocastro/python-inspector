@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright (c) nexB Inc. and others. All rights reserved.
 # ScanCode is a trademark of nexB Inc.
@@ -8,15 +7,13 @@
 # See https://github.com/nexB/skeleton for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
+from __future__ import annotations
 
 from packageurl import PackageURL
 from packvers.requirements import Requirement
-from pip_requirements_parser import InstallRequirement
 
 from _packagedcode import models
-from _packagedcode.pypi import PipRequirementsFileHandler
-from _packagedcode.pypi import get_requirements_txt_dependencies
-
+from _packagedcode.pypi import PipRequirementsFileHandler, get_requirements_txt_dependencies
 from python_inspector import settings
 from python_inspector.core.settings import TraceLevel
 
@@ -31,7 +28,8 @@ def get_dependencies_from_requirements(requirements_file="requirements.txt"):
     file.
     """
     dependent_packages, _ = get_requirements_txt_dependencies(
-        location=requirements_file, include_nested=True
+        location=requirements_file,
+        include_nested=True,
     )
     for dependent_package in dependent_packages:
         if settings.TRACE == TraceLevel.TRACE:
@@ -71,8 +69,8 @@ def get_dependency(specifier):
 
     scope = "install"
     is_runtime: bool = True
-    is_optional: bool= False
- 
+    is_optional: bool = False
+
     if requirement.name:
         # will be None if not pinned
         version = None

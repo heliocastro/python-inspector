@@ -14,11 +14,11 @@ from packvers.tags import Tag
 from pydantic import Field
 
 from python_inspector import settings
+from python_inspector.core.settings import TraceLevel
 from python_inspector.models import Environment, Link, NameVer
 from python_inspector.models.distribution import Distribution, InvalidDistributionFilenameError
 from python_inspector.models.sdist import EXTENSIONS, Sdist
 from python_inspector.models.wheel import Wheel
-from python_inspector.core.settings import TraceLevel
 
 """
 - A PyPiPackage represents a PyPI package with its name, version and metadata.
