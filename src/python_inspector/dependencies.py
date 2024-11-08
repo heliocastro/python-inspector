@@ -18,7 +18,7 @@ from _packagedcode.pypi import PipRequirementsFileHandler
 from _packagedcode.pypi import get_requirements_txt_dependencies
 
 from python_inspector import settings
-from python_inspector.settings import TraceLevel
+from python_inspector.core.settings import TraceLevel
 
 """
 Utilities to resolve dependencies .

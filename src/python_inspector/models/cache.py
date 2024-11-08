@@ -13,14 +13,15 @@ from typing import Any
 from urllib.parse import quote_plus
 
 import requests
+from pydantic import BaseModel
 from requests.auth import HTTPBasicAuth
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from python_inspector import settings
-from python_inspector.settings import TraceLevel
+from python_inspector.core.settings import TraceLevel
 
 
-class Cache:
+class Cache(BaseModel):
     """
     A simple file-based cache based only on a filename presence.
     This is used to avoid impolite fetching from remote locations.

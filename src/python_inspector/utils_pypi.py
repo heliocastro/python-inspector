@@ -21,7 +21,7 @@ from python_inspector.models.pypipackage import PypiPackage
 from python_inspector.models.pypisimplerepository import PypiSimpleRepository, get_default_repo
 from python_inspector.models.sdist import Sdist
 from python_inspector.models.wheel import Wheel
-from python_inspector.settings import TraceLevel
+from python_inspector.core.settings import TraceLevel
 
 """
 Utilities to manage Python thirparty libraries source, binaries and metadata in

@@ -15,7 +15,7 @@ from pydantic import Field
 
 from python_inspector import settings
 from python_inspector.models.distribution import Distribution, InvalidDistributionFilenameError
-from python_inspector.settings import TraceLevel
+from python_inspector.core.settings import TraceLevel
 
 """
 - A Wheel binary Distribution can have Python/Platform/OS tags it supports and

@@ -8,7 +8,7 @@
 #
 from __future__ import annotations
 
-from python_inspector.settings import Settings
+from python_inspector.core.settings import Settings
 
 # Initialize global settings
 settings = Settings()

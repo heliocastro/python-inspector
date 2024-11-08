@@ -35,7 +35,7 @@ from python_inspector.resolution import (
     get_reqs_insecurely,
     get_requirements_from_python_manifest,
 )
-from python_inspector.settings import TraceLevel
+from python_inspector.core.settings import TraceLevel
 from python_inspector.utils_pypi import PLATFORMS_BY_OS, Environment, valid_python_versions
 
 
