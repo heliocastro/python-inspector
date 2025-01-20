@@ -12,4 +12,3 @@ include requirements*
 include .git*
 
 global-exclude *.py[co] __pycache__ *.*~
-

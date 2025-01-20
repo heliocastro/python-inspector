@@ -107,14 +107,14 @@ def resolve_dependencies(
         raise Exception("No operating system provided.")
     if operating_system not in PLATFORMS_BY_OS:
         raise ValueError(
-            f"Invalid operating system: {operating_system}. " f"Must be one of: {', '.join(PLATFORMS_BY_OS.keys())}",
+            f"Invalid operating system: {operating_system}. Must be one of: {', '.join(PLATFORMS_BY_OS.keys())}",
         )
 
     if not python_version:
         raise Exception("No python version provided.")
     if python_version not in valid_python_versions:
         raise ValueError(
-            f"Invalid python version: {python_version}. " f"Must be one of: {', '.join(valid_python_versions)}",
+            f"Invalid python version: {python_version}. Must be one of: {', '.join(valid_python_versions)}",
         )
 
     if verbose:

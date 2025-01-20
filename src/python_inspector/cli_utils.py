@@ -6,6 +6,7 @@
 # See https://github.com/aboutcode-org/scancode-toolkit for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
+from __future__ import annotations
 
 import os
 from itertools import chain
@@ -21,13 +22,8 @@ class FileOptionType(click.File):
 
     def convert(self, value, param, ctx):
         if not ctx:
-            self.fail(
-                "Trying to access a command from invalid context."
-            )
-        known_opts = set(
-            chain.from_iterable(
-                p.opts for p in ctx.command.params if isinstance(p, click.Option))
-        )
+            self.fail("Trying to access a command from invalid context.")
+        known_opts = set(chain.from_iterable(p.opts for p in ctx.command.params if isinstance(p, click.Option)))
         if value in known_opts:
             self.fail(
                 "Illegal file name conflicting with an option name: "

@@ -14,6 +14,7 @@ maintainers = [
     { name="nexB. Inc. and others", email="info@aboutcode.org"},
     { name ="Helio Chissini de Castro", email="helio.chissini.de.castro@cariad.technology" },
 ]
+readme = "README.rst"
 license = "Apache-2.0"
 license-files = [
     "apache-2.0.LICENSE",

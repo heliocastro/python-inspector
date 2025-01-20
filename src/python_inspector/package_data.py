@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright (c) nexB Inc. and others. All rights reserved.
 # ScanCode is a trademark of nexB Inc.
@@ -8,21 +7,19 @@
 # See https://github.com/aboutcode-org/python-inspector for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
-
-from typing import List
+from __future__ import annotations
 
 from packageurl import PackageURL
 
 from _packagedcode.models import PackageData
-from _packagedcode.pypi import (get_declared_license, get_description,
-                                get_keywords, get_parties)
+from _packagedcode.pypi import get_declared_license, get_description, get_keywords, get_parties
 from python_inspector import utils_pypi
 from python_inspector.resolution import get_python_version_from_env_tag
 from python_inspector.utils_pypi import Environment, PypiSimpleRepository
 
 
 def get_pypi_data_from_purl(
-    purl: str, environment: Environment, repos: List[PypiSimpleRepository], prefer_source: bool
+    purl: str, environment: Environment, repos: list[PypiSimpleRepository], prefer_source: bool
 ) -> PackageData:
     """
     Generate `Package` object from the `purl` string of pypi type
@@ -50,8 +47,7 @@ def get_pypi_data_from_purl(
     project_urls = info.get("project_urls") or {}
     code_view_url = get_pypi_codeview_url(project_urls)
     bug_tracking_url = get_pypi_bugtracker_url(project_urls)
-    python_version = get_python_version_from_env_tag(
-        python_version=environment.python_version)
+    python_version = get_python_version_from_env_tag(python_version=environment.python_version)
     valid_distribution_urls = []
 
     valid_distribution_urls.append(
@@ -138,10 +134,10 @@ def get_pypi_codeview_url(project_urls):
 
 def get_wheel_download_urls(
     purl: PackageURL,
-    repos: List[PypiSimpleRepository],
+    repos: list[PypiSimpleRepository],
     environment: Environment,
     python_version: str,
-) -> List[str]:
+) -> list[str]:
     """
     Return a list of download urls for the given purl.
     """
@@ -156,9 +152,7 @@ def get_wheel_download_urls(
             yield wheel.download_url
 
 
-def get_sdist_download_url(
-    purl: PackageURL, repos: List[PypiSimpleRepository], python_version: str
-) -> str:
+def get_sdist_download_url(purl: PackageURL, repos: list[PypiSimpleRepository], python_version: str) -> str:
     """
     Return a list of download urls for the given purl.
     """

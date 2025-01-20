@@ -34,7 +34,7 @@ def print_version(ctx, param, value):
     metavar="REQUIREMENT-FILE",
     multiple=True,
     required=False,
-    help="Path to pip requirements file listing thirdparty packages. " "This option can be used multiple times.",
+    help="Path to pip requirements file listing thirdparty packages. This option can be used multiple times.",
 )
 @click.option(
     "-s",
@@ -137,7 +137,7 @@ def print_version(ctx, param, value):
     "--use-cached-index",
     is_flag=True,
     hidden=True,
-    help="Use cached on-disk PyPI simple package indexes " "and do not refetch package index if cache is present.",
+    help="Use cached on-disk PyPI simple package indexes and do not refetch package index if cache is present.",
 )
 @click.option(
     "--use-pypi-json-api",

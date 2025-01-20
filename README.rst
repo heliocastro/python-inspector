@@ -71,5 +71,3 @@ Its companion libraries are:
   installed site-packages and their metadata formats.
 
 - ``packageurl-python`` to use Package URL to reference Python packages
-
-

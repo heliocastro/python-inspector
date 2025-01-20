@@ -29,4 +29,4 @@ except metadata.PackageNotFoundError:
     import toml
 
     pyproject = toml.loads((Path(__file__).parent.parent.parent / "pyproject.toml").read_text())
-    __version__ = pyproject["tool"]["poetry"]["version"]
+    __version__ = pyproject["project"]["version"]

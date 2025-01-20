@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # This file is part of Requirements-Builder
 # Copyright (C) 2015, 2016, 2017, 2018 CERN.
@@ -9,6 +8,8 @@
 #
 """Generate requirements from `setup.py` and `requirements-devel.txt`."""
 
+from __future__ import annotations
+
 import ast
 import os
 import sys
@@ -16,12 +17,11 @@ import sys
 try:
     import configparser
 except ImportError:  # pragma: no cover
-    import ConfigParser as configparser
+    pass
 
-import distutils.core
 
-import mock
-import setuptools
+from unittest import mock
+
 from commoncode.command import pushd
 from packvers.requirements import Requirement
 
@@ -29,7 +29,7 @@ from packvers.requirements import Requirement
 def minver_error(pkg_name):
     """Report error about missing minimum version constraint and exit."""
     print(
-        'ERROR: specify minimal version of "{0}" using ' '">=" or "=="'.format(pkg_name),
+        f'ERROR: specify minimal version of "{pkg_name}" using ">=" or "=="',
         file=sys.stderr,
     )
     sys.exit(1)
@@ -79,7 +79,7 @@ def iter_requirements(level, extras, setup_file):
                     and elem.value.func.attr == "setup"
                 ):
                     name = elem.value.func.value.id
-                    if name in asnames.keys():
+                    if name in asnames:
                         name = asnames[name]
                     imports.append(name)
                 # for module imports, e.g. import disttools.core; disttools.core.setup(...)
@@ -90,18 +90,13 @@ def iter_requirements(level, extras, setup_file):
                     and isinstance(elem.value.func.value, ast.Attribute)
                     and elem.value.func.attr == "setup"
                 ):
-                    name = (
-                        str(elem.value.func.value.value.id) + "." + str(elem.value.func.value.attr)
-                    )
-                    if name in asnames.keys():
+                    name = str(elem.value.func.value.value.id) + "." + str(elem.value.func.value.attr)
+                    if name in asnames:
                         name = asnames[name]
                     imports.append(name)
             setup_providers = [i for i in imports if i in ["distutils.core", "setuptools"]]
             if len(setup_providers) == 0:
-                print(
-                    f"Warning: unable to recognize setup provider in {setup_file}: "
-                    "defaulting to 'distutils.core'."
-                )
+                print(f"Warning: unable to recognize setup provider in {setup_file}: defaulting to 'distutils.core'.")
                 setup_provider = "distutils.core"
             elif len(setup_providers) == 1:
                 setup_provider = setup_providers[0]
@@ -134,7 +129,7 @@ def iter_requirements(level, extras, setup_file):
             e, condition = e.split(":", 1)
         if not e or e in extras:
             if condition:
-                reqs = ["{0}; {1}".format(r, condition) for r in reqs]
+                reqs = [f"{r}; {condition}" for r in reqs]
             install_requires.extend(reqs)
 
     for reqs in test_requires:
@@ -164,7 +159,7 @@ def iter_requirements(level, extras, setup_file):
         specs = {s.operator: s.version for s in specs._specs}
         if ((">=" in specs) and (">" in specs)) or (("<=" in specs) and ("<" in specs)):
             print(
-                "ERROR: Do not specify such weird constraints! " '("{0}")'.format(pkg),
+                f'ERROR: Do not specify such weird constraints! ("{pkg}")',
                 file=sys.stderr,
             )
             sys.exit(1)

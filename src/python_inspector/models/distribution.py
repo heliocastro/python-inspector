@@ -199,7 +199,7 @@ class Distribution(NameVer):
             package = repo.get_package_version(name=self.name, version=self.version)
             if not package:
                 if settings.TRACE == TraceLevel.TRACE:
-                    print(f"     get_best_download_url: {self.name}=={self.version} " f"not found in {repo.index_url}")
+                    print(f"     get_best_download_url: {self.name}=={self.version} not found in {repo.index_url}")
                 continue
             pypi_url = package.get_url_for_filename(self.filename)
             if pypi_url:
@@ -401,7 +401,7 @@ class Distribution(NameVer):
             purl_from_data = packageurl.PackageURL.from_string(package_url)
             purl_from_self = packageurl.PackageURL.from_string(self.package_url)
             if purl_from_data != purl_from_self:
-                print(f"Invalid dist update attempt, no same same purl with dist: " f"{self} using data {data}.")
+                print(f"Invalid dist update attempt, no same same purl with dist: {self} using data {data}.")
                 return False
 
         data.pop("about_resource", None)
