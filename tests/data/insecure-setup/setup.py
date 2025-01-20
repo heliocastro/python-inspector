@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import annotations
 
 import os
 import re
@@ -94,5 +95,5 @@ Read the docs at:
             "rdfgraphisomorphism = rdflib.tools.graphisomorphism:main",
         ],
     },
-    **kwargs
+    **kwargs,
 )

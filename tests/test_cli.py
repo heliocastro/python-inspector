@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright (c) nexB Inc. and others. All rights reserved.
 # ScanCode is a trademark of nexB Inc.
@@ -8,6 +7,7 @@
 # See https://github.com/nexB/python-inspector for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
+from __future__ import annotations
 
 import json
 import os
@@ -46,9 +46,7 @@ def test_cli_with_default_urls():
 @pytest.mark.online
 def test_cli_with_requirements_and_ignore_errors():
     requirements_file = test_env.get_test_loc("error-requirements.txt")
-    expected_file = test_env.get_test_loc(
-        "example-requirements-ignore-errors-expected.json", must_exist=False
-    )
+    expected_file = test_env.get_test_loc("example-requirements-ignore-errors-expected.json", must_exist=False)
     extra_options = [
         "--ignore-errors",
         "--operating-system",
@@ -81,9 +79,7 @@ def test_pdt_output():
 @pytest.mark.online
 def test_pdt_output_with_pinned_requirements():
     requirements_file = test_env.get_test_loc("pinned-pdt-requirements.txt")
-    expected_file = test_env.get_test_loc(
-        "pinned-pdt-requirements.txt-expected.json", must_exist=False
-    )
+    expected_file = test_env.get_test_loc("pinned-pdt-requirements.txt-expected.json", must_exist=False)
     extra_options = []
     check_requirements_resolution(
         requirements_file=requirements_file,
@@ -126,9 +122,7 @@ def test_cli_with_single_index_url():
 
 @pytest.mark.online
 def test_cli_with_single_index_url_except_pypi_simple():
-    expected_file = test_env.get_test_loc(
-        "single-url-except-simple-expected.json", must_exist=False
-    )
+    expected_file = test_env.get_test_loc("single-url-except-simple-expected.json", must_exist=False)
     # using flask since it's not present in thirdparty
     specifier = "flask"
     extra_options = [
@@ -164,9 +158,7 @@ def test_cli_with_multiple_index_url_and_tilde_req():
 @pytest.mark.online
 def test_cli_with_environment_marker_and_complex_ranges():
     requirements_file = test_env.get_test_loc("environment-marker-test-requirements.txt")
-    expected_file = test_env.get_test_loc(
-        "environment-marker-test-requirements.txt-expected.json", must_exist=False
-    )
+    expected_file = test_env.get_test_loc("environment-marker-test-requirements.txt-expected.json", must_exist=False)
     extra_options = [
         "--operating-system",
         "linux",
@@ -331,9 +323,7 @@ def test_cli_with_insecure_option():
 @pytest.mark.online
 def test_cli_with_insecure_option_testpkh():
     setup_py_file = test_env.get_test_loc("insecure-setup-2/setup.py")
-    expected_file = test_env.get_test_loc(
-        "insecure-setup-2/setup.py-expected.json", must_exist=False
-    )
+    expected_file = test_env.get_test_loc("insecure-setup-2/setup.py-expected.json", must_exist=False)
     check_setup_py_resolution(
         setup_py=setup_py_file,
         expected_file=expected_file,
@@ -369,9 +359,7 @@ def test_cli_with_setup_py():
 @pytest.mark.online
 def test_cli_with_setup_py_no_direct_dependencies():
     setup_py_file = setup_test_env.get_test_loc("no-direct-dependencies-setup.py")
-    expected_file = setup_test_env.get_test_loc(
-        "no-direct-dependencies-setup.py-expected.json", must_exist=False
-    )
+    expected_file = setup_test_env.get_test_loc("no-direct-dependencies-setup.py-expected.json", must_exist=False)
     check_setup_py_resolution(
         setup_py=setup_py_file,
         expected_file=expected_file,

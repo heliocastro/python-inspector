@@ -1,40 +1,38 @@
+from __future__ import annotations
+
 import logging
 import sys
 
 import six
-from rdflib import plugin
-from rdflib import query
-from rdflib import util
-from rdflib.graph import ConjunctiveGraph
-from rdflib.graph import Dataset
-from rdflib.graph import Graph
-from rdflib.namespace import CSVW
-from rdflib.namespace import DC
-from rdflib.namespace import DCAT
-from rdflib.namespace import DCTERMS
-from rdflib.namespace import DOAP
-from rdflib.namespace import FOAF
-from rdflib.namespace import ODRL2
-from rdflib.namespace import ORG
-from rdflib.namespace import OWL
-from rdflib.namespace import PROF
-from rdflib.namespace import PROV
-from rdflib.namespace import RDF
-from rdflib.namespace import RDFS
-from rdflib.namespace import SDO
-from rdflib.namespace import SH
-from rdflib.namespace import SKOS
-from rdflib.namespace import SOSA
-from rdflib.namespace import SSN
-from rdflib.namespace import TIME
-from rdflib.namespace import VOID
-from rdflib.namespace import XMLNS
-from rdflib.namespace import XSD
-from rdflib.namespace import Namespace
-from rdflib.term import BNode
-from rdflib.term import Literal
-from rdflib.term import URIRef
-from rdflib.term import Variable
+
+from rdflib import plugin, query, util
+from rdflib.graph import ConjunctiveGraph, Dataset, Graph
+from rdflib.namespace import (
+    CSVW,
+    DC,
+    DCAT,
+    DCTERMS,
+    DOAP,
+    FOAF,
+    ODRL2,
+    ORG,
+    OWL,
+    PROF,
+    PROV,
+    RDF,
+    RDFS,
+    SDO,
+    SH,
+    SKOS,
+    SOSA,
+    SSN,
+    TIME,
+    VOID,
+    XMLNS,
+    XSD,
+    Namespace,
+)
+from rdflib.term import BNode, Literal, URIRef, Variable
 
 # tedious sop to flake8
 assert plugin

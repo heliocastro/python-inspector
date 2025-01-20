@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright (c) nexB Inc. and others. All rights reserved.
 # ScanCode is a trademark of nexB Inc.
@@ -8,6 +7,7 @@
 # See https://github.com/nexB/python-inspector for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
+from __future__ import annotations
 
 import os
 
@@ -65,9 +65,7 @@ def test_api_with_prefer_source():
 
 def test_api_with_recursive_requirement_file():
     requirement_file = test_env.get_test_loc("recursive_requirements/r.txt")
-    expected_file = test_env.get_test_loc(
-        "test-api-with-recursive-requirement-file.json", must_exist=False
-    )
+    expected_file = test_env.get_test_loc("test-api-with-recursive-requirement-file.json", must_exist=False)
     results = resolver_api(
         python_version="3.8",
         operating_system="linux",

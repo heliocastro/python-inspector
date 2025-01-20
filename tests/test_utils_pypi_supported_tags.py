@@ -9,6 +9,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 import pytest
 
@@ -65,10 +66,7 @@ def validate_wheel_filename_for_pypi(filename):
         "macosx_10_15_arm64",
         "macosx_11_10_universal2",
         # A real tag used by e.g. some numpy wheels
-        (
-            "macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64."
-            "macosx_10_10_intel.macosx_10_10_x86_64"
-        ),
+        ("macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64"),
     ],
 )
 def test_is_valid_pypi_wheel_return_true_for_supported_wheel(plat):

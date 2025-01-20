@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright (c) nexB Inc. and others. All rights reserved.
 # ScanCode is a trademark of nexB Inc.
@@ -8,14 +7,13 @@
 # See https://github.com/nexB/python-inspector for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
+from __future__ import annotations
 
 from typing import NamedTuple
 
 import pytest
 
-from python_inspector.utils_pypi import Distribution
-from python_inspector.utils_pypi import Sdist
-from python_inspector.utils_pypi import Wheel
+from python_inspector.utils_pypi import Distribution, Sdist, Wheel
 
 
 class DistTest(NamedTuple):

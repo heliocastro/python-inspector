@@ -6,14 +6,13 @@
 # See https://github.com/nexB/skeleton for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
+from __future__ import annotations
 
 from _packagedcode.models import DependentPackage
 from _packagedcode.pypi import create_dependency_for_python_requires
 
 
 def test_create_dependency_for_python_requires():
-    assert create_dependency_for_python_requires(
-        python_requires_specifier=">=3.6"
-    ) == DependentPackage(
+    assert create_dependency_for_python_requires(python_requires_specifier=">=3.6") == DependentPackage(
         purl="pkg:generic/python", extracted_requirement="python_requires>=3.6", scope="python"
     )

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright (c) nexB Inc. and others. All rights reserved.
 # ScanCode is a trademark of nexB Inc.
@@ -8,6 +7,8 @@
 # See https://github.com/nexB/python-inspector for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
+from __future__ import annotations
+
 import collections
 import json
 import os
@@ -20,8 +21,7 @@ from test_cli import check_json_file_results
 from _packagedcode.pypi import SetupCfgHandler
 from python_inspector.resolution import fetch_and_extract_sdist
 from python_inspector.utils import get_netrc_auth
-from python_inspector.utils_pypi import PypiSimpleRepository
-from python_inspector.utils_pypi import valid_python_version
+from python_inspector.utils_pypi import PypiSimpleRepository, valid_python_version
 
 test_env = FileDrivenTesting()
 test_env.test_data_dir = os.path.join(os.path.dirname(__file__), "data")
@@ -64,18 +64,14 @@ def test_fetch_links(mock_get):
         mock_get.return_value = realtive_file.read()
     relative_links = PypiSimpleRepository().fetch_links(normalized_name="sources.whl")
     relative_links_result_file = test_env.get_temp_file("json")
-    relative_links_expected_file = test_env.get_test_loc(
-        "relative-links-expected.json", must_exist=False
-    )
+    relative_links_expected_file = test_env.get_test_loc("relative-links-expected.json", must_exist=False)
     with open(relative_links_result_file, "w") as file:
         json.dump(relative_links, file, indent=4)
     check_json_file_results(relative_links_result_file, relative_links_expected_file)
 
 
 def test_parse_reqs():
-    results = [
-        package.to_dict() for package in SetupCfgHandler.parse(test_env.get_test_loc("setup.cfg"))
-    ]
+    results = [package.to_dict() for package in SetupCfgHandler.parse(test_env.get_test_loc("setup.cfg"))]
     result_file = test_env.get_temp_file("json")
     expected_file = test_env.get_test_loc("parse-reqs.json", must_exist=False)
     with open(result_file, "w") as file:
@@ -95,14 +91,10 @@ def test_get_sdist_file():
 def test_parse_reqs_with_setup_requires_and_python_requires():
     results = [
         package.to_dict()
-        for package in SetupCfgHandler.parse(
-            test_env.get_test_loc("setup_with_setup_requires_and_python_requires.cfg")
-        )
+        for package in SetupCfgHandler.parse(test_env.get_test_loc("setup_with_setup_requires_and_python_requires.cfg"))
     ]
     result_file = test_env.get_temp_file("json")
-    expected_file = test_env.get_test_loc(
-        "parse-reqs-with-setup_requires-and-python-requires.json", must_exist=False
-    )
+    expected_file = test_env.get_test_loc("parse-reqs-with-setup_requires-and-python-requires.json", must_exist=False)
     with open(result_file, "w") as file:
         json.dump(results, file, indent=4)
     check_json_file_results(result_file, expected_file)

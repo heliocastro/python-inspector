@@ -6,6 +6,7 @@
 # See https://github.com/nexB/skeleton for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
+from __future__ import annotations
 
 import configparser
 import subprocess
@@ -30,7 +31,6 @@ class BaseTests(unittest.TestCase):
             print(e.output)
             print("===========================================================")
             raise Exception(
-                "Black style check failed; please format the code using:\n"
-                "  python -m black -l 100 setup.py etc tests",
+                "Black style check failed; please format the code using:\n  python -m black -l 100 setup.py etc tests",
                 e.output,
             ) from e

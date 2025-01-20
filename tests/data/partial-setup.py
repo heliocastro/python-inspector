@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from setuptools import setup
 
 semver_version = "2.13.0"

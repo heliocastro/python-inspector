@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # This file is part of Requirements-Builder
 # Copyright (C) 2015, 2016, 2017, 2018 CERN.
@@ -8,6 +7,8 @@
 # file for more details.
 #
 """Build requirements files from setup.py requirements."""
+
+from __future__ import annotations
 
 import os
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # This file is part of Requirements-Builder
 # Copyright (C) 2015 CERN.
@@ -8,9 +7,10 @@
 # file for more details.
 #
 """Tests for `requirements-builder` module."""
-from os.path import abspath
-from os.path import dirname
-from os.path import join
+
+from __future__ import annotations
+
+from os.path import abspath, dirname, join
 
 import pytest
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright (c) nexB Inc. and others. All rights reserved.
 # ScanCode is a trademark of nexB Inc.
@@ -8,6 +7,8 @@
 # See https://github.com/nexB/python-inspector for support or download.
 # See https://aboutcode.org for more information about nexB OSS projects.
 #
+from __future__ import annotations
+
 import os
 from unittest.mock import patch
 
@@ -20,13 +21,14 @@ from packvers.requirements import Requirement
 from _packagedcode import models
 from python_inspector.api import get_resolved_dependencies
 from python_inspector.error import NoVersionsFound
-from python_inspector.resolution import (PythonInputProvider,
-                                         get_requirements_from_dependencies,
-                                         get_requirements_from_python_manifest,
-                                         is_valid_version,
-                                         parse_reqs_from_setup_py_insecurely)
-from python_inspector.utils_pypi import (PYPI_PUBLIC_REPO, Environment,
-                                         PypiSimpleRepository)
+from python_inspector.resolution import (
+    PythonInputProvider,
+    get_requirements_from_dependencies,
+    get_requirements_from_python_manifest,
+    is_valid_version,
+    parse_reqs_from_setup_py_insecurely,
+)
+from python_inspector.utils_pypi import PYPI_PUBLIC_REPO, Environment, PypiSimpleRepository
 
 setup_test_env = FileDrivenTesting()
 setup_test_env.test_data_dir = os.path.join(os.path.dirname(__file__), "data")
@@ -142,9 +144,7 @@ def test_get_resolved_dependencies_for_version_containing_local_version_identifi
             python_version="310",
             operating_system="linux",
         ),
-        repos=[
-            PypiSimpleRepository(index_url="https://download.pytorch.org/whl/cpu", credentials=None)
-        ],
+        repos=[PypiSimpleRepository(index_url="https://download.pytorch.org/whl/cpu", credentials=None)],
         as_tree=False,
     )
 
